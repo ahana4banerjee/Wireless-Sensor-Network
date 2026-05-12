@@ -11,6 +11,13 @@ import argparse
 load_dotenv()
 API_KEY = os.getenv("WEATHER_API_KEY")
 
+# Get the directory where node.py is located
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# Build the path to settings.json relative to this script
+# (Up one level to root, then into configs/)
+config_path = os.path.join(BASE_DIR, "..", "configs", "settings.json")
+
 class SensorNode:
     def __init__(self, city, config):
         self.city = city
@@ -75,14 +82,17 @@ class SensorNode:
             self.client.disconnect()
 
 if __name__ == "__main__":
-    # Allow city to be passed via command line: python node.py --city Mumbai
     parser = argparse.ArgumentParser()
     parser.add_argument("--city", required=True)
     args = parser.parse_args()
 
-    # Load settings.json (Assume it's in ../configs/)
-    with open("../configs/settings.json") as f:
-        conf = json.load(f)
+    # Use the robust path here
+    try:
+        with open(config_path) as f:
+            conf = json.load(f)
+    except FileNotFoundError:
+        print(f"Error: Could not find config at {config_path}")
+        exit(1)
 
     node = SensorNode(args.city, conf)
     node.start()
