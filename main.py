@@ -3,16 +3,20 @@ import subprocess
 import json
 import os
 import time
+import sys
 
 def launch_node(city):
     """Spawns a new process to run a specific city node."""
     print(f"[Master] Launching node for {city}...")
     # Using subprocess to call the node script independently
-    subprocess.run(["python", "src/node.py", "--city", city])
+    subprocess.run([sys.executable, "src/node.py", "--city", city])
 
 if __name__ == "__main__":
     # 1. Load cities from config
-    config_path = os.path.join("configs", "settings.json")
+    # Professional pathing check
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    config_path = os.path.join(BASE_DIR, "configs", "settings.json")
+    
     with open(config_path) as f:
         config = json.load(f)
     
@@ -26,7 +30,7 @@ if __name__ == "__main__":
         p = multiprocessing.Process(target=launch_node, args=(city,))
         p.start()
         processes.append(p)
-        time.sleep(1) # Small stagger to prevent hitting API limits simultaneously
+        time.sleep(1) # Stagger to avoid API collisions
 
     try:
         for p in processes:

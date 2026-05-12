@@ -56,12 +56,31 @@ def on_message(client, userdata, msg):
         print(f"[ERROR] Backend failed to process message: {e}")
 
 def save_to_csv(city, data):
+    """
+    Ensures the log directory exists, creates a city-specific CSV if missing,
+    and appends data without duplicate headers.
+    """
+    # 1. 'exist_ok=True' prevents an error if the folder already exists
     os.makedirs(LOG_DIR, exist_ok=True)
+    
     file_path = os.path.join(LOG_DIR, f"{city}_history.csv")
     
+    # 2. Check if the file exists BEFORE we try to write to it
+    file_exists = os.path.isfile(file_path)
+    
+    # Create the DataFrame from the current reading
     df = pd.DataFrame([data])
-    # header=not exists ensures we only write the CSV header once
-    df.to_csv(file_path, mode='a', index=False, header=not os.path.exists(file_path))
+    
+    # 3. Write to CSV:
+    # 'mode=a' appends to the end of the file
+    # 'header=not file_exists' only writes the column names if it's a brand new file
+    df.to_csv(
+        file_path, 
+        mode='a', 
+        index=False, 
+        header=not file_exists, 
+        encoding='utf-8'
+    )
 
 def monitor_health():
     """Watchdog logic to check for silent nodes."""

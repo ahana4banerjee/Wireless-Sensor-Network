@@ -5,8 +5,8 @@
         "base_topic": "wsn"
     },
     "simulation": {
-        "data_interval": 600,
-        "heartbeat_interval": 30,
+        "data_interval": 60,
+        "heartbeat_interval": 20,
         "packet_loss_rate": 0.05,
         "max_delay_ms": 1500
     },
