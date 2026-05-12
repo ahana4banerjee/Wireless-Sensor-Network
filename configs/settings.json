@@ -2,15 +2,13 @@
     "mqtt": {
         "broker": "localhost",
         "port": 1883,
-        "base_topic": "wsn",
-        "data_subtopic": "data",
-        "status_subtopic": "status"
+        "base_topic": "wsn"
     },
     "simulation": {
-        "update_interval": 10,
-        "heartbeat_interval": 5,
-        "packet_loss_rate": 0.1,
-        "max_delay_ms": 2000
+        "data_interval": 600,
+        "heartbeat_interval": 30,
+        "packet_loss_rate": 0.05,
+        "max_delay_ms": 1500
     },
     "cities": ["Hyderabad", "Delhi", "Mumbai", "Bangalore", "Secunderabad"]
 }

@@ -3,55 +3,92 @@ import json
 import pandas as pd
 import time
 import os
+from collections import deque
 
-# Tracking node health
-node_health = {} # { "Mumbai": last_timestamp }
-HEALTH_THRESHOLD = 15 # Seconds before marking OFFLINE
+# --- Configuration ---
+BROKER = "localhost"
+PORT = 1883
+TOPIC_FILTER = "wsn/+/+"  # Subscribe to all cities and all message types
+HEALTH_THRESHOLD = 45     # Seconds before a node is marked OFFLINE
+LOG_DIR = os.path.join(os.path.dirname(__file__), "..", "data", "logs")
+
+# --- In-Memory Storage for Dashboard ---
+# We keep the last 50 readings for each city to show live graphs later
+live_data_buffer = {} # Format: { "Mumbai": deque([...], maxlen=50) }
+node_health = {}      # Format: { "Mumbai": last_heartbeat_timestamp }
+
+def flatten_payload(payload):
+    """Converts nested metrics into a flat dictionary for CSV/DataFrames."""
+    flat = {
+        "timestamp": time.ctime(payload['ts']), # Human readable for CSV
+        "unix_ts": payload['ts'],              # Machine readable for ML
+        "node_id": payload['node_id'],
+        "condition": payload.get('condition', 'N/A')
+    }
+    # Merge the metrics dictionary into the top level
+    flat.update(payload.get('metrics', {}))
+    return flat
 
 def on_message(client, userdata, msg):
-    topic_parts = msg.topic.split('/')
-    city = topic_parts[1]
-    msg_type = topic_parts[2]
-    payload = json.loads(msg.payload.decode())
+    try:
+        topic_parts = msg.topic.split('/')
+        city = topic_parts[1]
+        msg_type = topic_parts[2]
+        payload = json.loads(msg.payload.decode())
 
-    if msg_type == "status":
-        node_health[city] = time.time()
-        print(f"--- [HEALTH] Node {city} is alive.")
-    
-    elif msg_type == "data":
-        print(f"--- [DATA] Received from {city}: {payload}")
-        save_to_csv(city, payload)
+        if msg_type == "status":
+            node_health[city] = time.time()
+            # print(f"[HEALTH] {city} is active.") # Quiet mode for better logs
+
+        elif msg_type == "data":
+            flat_data = flatten_payload(payload)
+            print(f"[DATA] Received from {city}: {flat_data['temp']}°C, {flat_data['condition']}")
+            
+            # 1. Update In-Memory Buffer
+            if city not in live_data_buffer:
+                live_data_buffer[city] = deque(maxlen=50)
+            live_data_buffer[city].append(flat_data)
+            
+            # 2. Log to City-Specific CSV
+            save_to_csv(city, flat_data)
+
+    except Exception as e:
+        print(f"[ERROR] Backend failed to process message: {e}")
 
 def save_to_csv(city, data):
-    folder = "../data/logs"
-    os.makedirs(folder, exist_ok=True)
-    file_path = f"{folder}/{city}_data.csv"
+    os.makedirs(LOG_DIR, exist_ok=True)
+    file_path = os.path.join(LOG_DIR, f"{city}_history.csv")
     
     df = pd.DataFrame([data])
-    # header=not os.path.exists prevents duplicate headers
+    # header=not exists ensures we only write the CSV header once
     df.to_csv(file_path, mode='a', index=False, header=not os.path.exists(file_path))
 
-def monitor_nodes():
-    """Logic to check for timed-out nodes."""
+def monitor_health():
+    """Watchdog logic to check for silent nodes."""
     now = time.time()
-    for city, last_seen in node_health.items():
+    for city, last_seen in list(node_health.items()):
         if now - last_seen > HEALTH_THRESHOLD:
-            print(f"!!! [ALERT] Node {city} is OFFLINE (No heartbeat).")
+            print(f"!!! [ALERT] Node {city} has timed out. Potential Fault Detected.")
+            # We keep it in the dict but we could trigger an alert email/notification here
 
 def start_backend():
     client = mqtt.Client(callback_api_version=mqtt.CallbackAPIVersion.VERSION2)
     client.on_message = on_message
-    client.connect("localhost", 1883)
-    client.subscribe("wsn/+/+") # Wildcard for all cities and all message types
-    
-    client.loop_start() # Run in background
-    print("Backend Watchdog Active...")
     
     try:
+        client.connect(BROKER, PORT, 60)
+        client.subscribe(TOPIC_FILTER)
+        
+        # loop_start runs the MQTT processing in a background thread
+        client.loop_start()
+        print("--- Backend Processor & Watchdog Online ---")
+        
         while True:
-            monitor_nodes()
-            time.sleep(5)
+            monitor_health()
+            time.sleep(10) # Check health every 10 seconds
+            
     except KeyboardInterrupt:
+        print("Shutting down backend...")
         client.disconnect()
 
 if __name__ == "__main__":
