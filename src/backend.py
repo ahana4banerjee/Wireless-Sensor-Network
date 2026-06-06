@@ -6,6 +6,7 @@ import os
 from collections import deque
 import logging
 from logging.handlers import RotatingFileHandler
+from utils.fault_detector import FaultDetector
 
 # --- Configuration ---
 BROKER = "localhost"
@@ -47,6 +48,28 @@ node_health = {}      # Format: { "Mumbai": last_heartbeat_timestamp }
 
 # --- Sequence Number Tracking for Packet Loss ---
 seq_tracker = {}      # Format: { "Mumbai": { "min_seq": 1, "max_seq": 10, "count": 8 } }
+
+# --- Fault Detector Setup ---
+fault_detector = FaultDetector()
+ALERTS_LOG_FILE = os.path.join(LOG_DIR, "alerts.log")
+
+def log_alert(alert):
+    """Logs structured alerts to console/file loggers and appends to data/logs/alerts.log."""
+    severity = alert["severity"]
+    msg = f"ALERT [{alert['alert_type']}] ({severity}) - {alert['node_id']}: {alert['message']} (value: {alert['value']})"
+    
+    if severity == "CRITICAL":
+        logger.error(msg)
+    elif severity == "WARNING":
+        logger.warning(msg)
+    elif severity == "RESOLVED":
+        logger.info(f"RESOLVED [{alert['alert_type']}] - {alert['node_id']}: {alert['message']}")
+        
+    try:
+        with open(ALERTS_LOG_FILE, "a", encoding="utf-8") as f:
+            f.write(json.dumps(alert) + "\n")
+    except Exception as e:
+        logger.error(f"Failed to write alert to log file: {e}")
 
 def update_packet_loss(city, seq_num):
     """Calculates running packet loss percentage based on sequence number gaps."""
@@ -193,6 +216,12 @@ def on_message(client, userdata, msg):
             seq_num = payload.get("seq_num")
             if seq_num is not None:
                 update_packet_loss(city, seq_num)
+            
+            # Check for offline resolution
+            if city in fault_detector.active_alerts and fault_detector.active_alerts[city].get("OFFLINE") == "CRITICAL":
+                alert = fault_detector._create_alert(city, "OFFLINE", "RESOLVED", "Node is back ONLINE", 0.0)
+                fault_detector.active_alerts[city]["OFFLINE"] = None
+                log_alert(alert)
             logger.debug(f"[STATUS] Received heartbeat from {city}.")
 
         elif msg_type == "data":
@@ -210,6 +239,11 @@ def on_message(client, userdata, msg):
                 f"Battery: {flat_data.get('battery_level')}%, Signal: {flat_data.get('signal_strength')} dBm, "
                 f"Latency: {flat_data.get('latency_ms')} ms, Loss: {flat_data.get('packet_loss_rate')}%"
             )
+            
+            # Run fault checks
+            alerts = fault_detector.check_telemetry(city, flat_data)
+            for alert in alerts:
+                log_alert(alert)
             
             # 1. Update In-Memory Buffer
             if city not in live_data_buffer:
@@ -252,9 +286,9 @@ def save_to_csv(city, data):
 def monitor_health():
     """Watchdog logic to check for silent nodes."""
     now = time.time()
-    for city, last_seen in list(node_health.items()):
-        if now - last_seen > HEALTH_THRESHOLD:
-            logger.warning(f"!!! [ALERT] Node {city} has timed out. Potential Fault Detected.")
+    alerts = fault_detector.check_node_timeouts(node_health, now)
+    for alert in alerts:
+        log_alert(alert)
 
 def start_backend():
     # Perform startup schema migration for existing logs
