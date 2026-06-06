@@ -104,8 +104,9 @@ def update_packet_loss(city, seq_num):
         return 0.0
         
     dropped = total_expected - tracker["count"]
-    loss_rate = (dropped / total_expected) * 100.0
+    loss_rate = max(0.0, (dropped / total_expected) * 100.0)
     return round(loss_rate, 2)
+
 
 def migrate_existing_csvs():
     """

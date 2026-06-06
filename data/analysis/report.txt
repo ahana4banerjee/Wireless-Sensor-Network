@@ -1,0 +1,84 @@
+====================================================
+      WSN SIMULATION DATASET ANALYSIS REPORT       
+====================================================
+
+1. DATASET DIMENSIONS
+---------------------
+Total Observations (Rows): 2376
+Total Attributes (Columns): 17
+
+2. DATA TYPES & MISSING VALUES
+------------------------------
+- timestamp            | Type: str        | Missing: 0
+- unix_ts              | Type: float64    | Missing: 0
+- node_id              | Type: str        | Missing: 0
+- condition            | Type: str        | Missing: 0
+- temp                 | Type: float64    | Missing: 0
+- feels_like           | Type: float64    | Missing: 0
+- humidity             | Type: int64      | Missing: 0
+- pressure             | Type: int64      | Missing: 0
+- wind_speed           | Type: float64    | Missing: 0
+- visibility           | Type: int64      | Missing: 0
+- battery_level        | Type: float64    | Missing: 0
+- signal_strength      | Type: float64    | Missing: 0
+- latency_ms           | Type: float64    | Missing: 0
+- packet_loss_rate     | Type: float64    | Missing: 0
+- seq_num              | Type: int64      | Missing: 0
+- city                 | Type: str        | Missing: 0
+- anomaly_flag         | Type: int64      | Missing: 0
+
+Duplicate Rows: 0
+
+3. FEATURE RANGES & STATISTICS
+------------------------------
+Feature: temp
+  Range: [27.05 to 39.38]
+  Mean : 34.25 | Std: 3.01
+  25%  : 32.87 | 50% (Median): 33.99 | 75%: 36.79
+
+Feature: humidity
+  Range: [22.00 to 74.00]
+  Mean : 42.36 | Std: 14.25
+  25%  : 32.00 | 50% (Median): 37.00 | 75%: 55.00
+
+Feature: pressure
+  Range: [995.00 to 1014.00]
+  Mean : 1002.54 | Std: 3.39
+  25%  : 1000.00 | 50% (Median): 1003.00 | 75%: 1005.00
+
+Feature: battery_level
+  Range: [0.06 to 100.00]
+  Mean : 57.64 | Std: 28.11
+  25%  : 33.81 | 50% (Median): 60.46 | 75%: 82.56
+
+Feature: signal_strength
+  Range: [-81.87 to -43.86]
+  Mean : -65.03 | Std: 7.81
+  25%  : -71.61 | 50% (Median): -65.06 | 75%: -58.60
+
+Feature: latency_ms
+  Range: [49.03 to 1474.90]
+  Mean : 458.58 | Std: 271.96
+  25%  : 243.89 | 50% (Median): 444.40 | 75%: 635.62
+
+Feature: packet_loss_rate
+  Range: [0.00 to 10.91]
+  Mean : 4.42 | Std: 1.08
+  25%  : 3.80 | 50% (Median): 4.56 | 75%: 5.16
+
+4. ANOMALY DETECTION METRICS
+----------------------------
+Anomalous Observations Flagged : 119
+Percentage of Dataset anomalous : 5.01%
+
+5. KEY OBSERVATIONS & FINDINGS
+------------------------------
+- Battery Life: 0 observations are logged with completely depleted battery (0.0%).
+- Correlations Spotted:
+  * Moderate/strong negative correlation between temp and humidity (-0.68)
+  * Moderate/strong negative correlation between temp and pressure (-0.31)
+  * Moderate/strong positive correlation between humidity and pressure (0.36)
+  * Moderate/strong negative correlation between humidity and signal_strength (-0.46)
+  * Moderate/strong negative correlation between pressure and signal_strength (-0.50)
+
+Report completed successfully. Ready for predictive modeling validation.

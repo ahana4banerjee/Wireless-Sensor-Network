@@ -54,6 +54,12 @@ class SensorNode:
         elif event_type == 'data':
             self.battery_level = max(0.0, self.battery_level - self.battery_discharge_data)
 
+        # Check if battery has depleted, reset to 100.0 (simulating maintenance/replacement)
+        if self.battery_level <= 0.0:
+            print(f"[{self.city}] Battery depleted (0.0%). Simulating maintenance replacement -> Resetting to 100.0%.")
+            self.battery_level = 100.0
+
+
     def get_signal_strength(self):
         """Simulates RSSI with normal distribution noise around a baseline."""
         # RSSI values are normally in the range of -30 to -100 dBm
