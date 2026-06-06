@@ -26,22 +26,57 @@ class SensorNode:
         # MQTT Client Setup
         self.client = mqtt.Client(callback_api_version=mqtt.CallbackAPIVersion.VERSION2)
         
+        # Simulation parameters
+        self.battery_level = 100.0
+        self.seq_num = 0
+        self.last_battery_update = time.time()
+        
+        # Load simulation config values with safe fallbacks
+        sim_config = config.get('simulation', {})
+        self.battery_discharge_heartbeat = sim_config.get('battery_discharge_heartbeat', 0.1)
+        self.battery_discharge_data = sim_config.get('battery_discharge_data', 0.5)
+        self.battery_discharge_idle = sim_config.get('battery_discharge_idle', 0.01)
+        self.rssi_baseline = sim_config.get('rssi_baseline', -60.0)
+        self.rssi_noise = sim_config.get('rssi_noise', 3.0)
+
+    def update_battery(self, current_time, event_type=None):
+        """Calculates and updates the battery level based on elapsed idle time and events."""
+        elapsed = current_time - self.last_battery_update
+        self.last_battery_update = current_time
+        
+        # Idle discharge
+        idle_discharge = elapsed * self.battery_discharge_idle
+        self.battery_level = max(0.0, self.battery_level - idle_discharge)
+        
+        # Event discharge (energy consumed during transmission attempts)
+        if event_type == 'heartbeat':
+            self.battery_level = max(0.0, self.battery_level - self.battery_discharge_heartbeat)
+        elif event_type == 'data':
+            self.battery_level = max(0.0, self.battery_level - self.battery_discharge_data)
+
+    def get_signal_strength(self):
+        """Simulates RSSI with normal distribution noise around a baseline."""
+        # RSSI values are normally in the range of -30 to -100 dBm
+        noise = random.normalvariate(0, self.rssi_noise)
+        rssi = self.rssi_baseline + noise
+        return max(-100.0, min(-30.0, round(rssi, 2)))
+
     def simulate_network_behavior(self):
         """
         Simulates realistic WSN constraints: Packet Loss and Latency.
-        Returns False if the packet is 'lost', True otherwise.
+        Returns (False, 0.0) if the packet is 'lost', (True, latency_ms) otherwise.
         """
         # 1. Packet Loss
         if random.random() < self.config['simulation']['packet_loss_rate']:
             print(f"[{self.city}] Network: Packet dropped.")
-            return False
+            return False, 0.0
         
         # 2. Latency (Random Delay)
         delay = random.uniform(0, self.config['simulation']['max_delay_ms'] / 1000)
         time.sleep(delay)
-        return True
+        return True, round(delay * 1000, 2)
 
-    def fetch_weather_data(self):
+    def fetch_weather_data(self, latency_ms):
         """Fetches comprehensive weather features from OpenWeatherMap."""
         url = f"https://api.openweathermap.org/data/2.5/weather?q={self.city}&appid={API_KEY}&units=metric"
         try:
@@ -53,6 +88,7 @@ class SensorNode:
             payload = {
                 "node_id": self.city,
                 "ts": time.time(),
+                "seq_num": self.seq_num,
                 "metrics": {
                     "temp": data['main'].get('temp'),
                     "feels_like": data['main'].get('feels_like'),
@@ -60,6 +96,10 @@ class SensorNode:
                     "pressure": data['main'].get('pressure'),
                     "wind_speed": data.get('wind', {}).get('speed', 0),
                     "visibility": data.get('visibility', 10000), # Default to 10km if missing
+                    "battery_level": round(self.battery_level, 2),
+                    "signal_strength": self.get_signal_strength(),
+                    "latency_ms": latency_ms,
+                    "seq_num": self.seq_num
                 },
                 "condition": data['weather'][0]['main'] if data.get('weather') else "Unknown"
             }
@@ -76,26 +116,58 @@ class SensorNode:
             
             last_data_tx = 0
             last_heartbeat_tx = 0
+            self.last_battery_update = time.time()
 
             while True:
                 current_time = time.time()
+                
+                # Update idle battery usage
+                self.update_battery(current_time)
+                if self.battery_level <= 0:
+                    print(f"[{self.city}] Battery depleted. Shutting down node process.")
+                    break
 
                 # 1. Heartbeat Logic (High Frequency)
                 if current_time - last_heartbeat_tx >= self.config['simulation']['heartbeat_interval']:
-                    if self.simulate_network_behavior():
+                    self.update_battery(current_time, 'heartbeat')
+                    if self.battery_level <= 0:
+                        print(f"[{self.city}] Battery depleted during heartbeat attempt. Shutting down.")
+                        break
+
+                    success, latency_ms = self.simulate_network_behavior()
+                    if success:
+                        self.seq_num += 1
                         status_topic = f"wsn/{self.city}/status"
-                        status_payload = {"node_id": self.city, "status": "ONLINE", "ts": current_time}
+                        status_payload = {
+                            "node_id": self.city, 
+                            "status": "ONLINE", 
+                            "ts": current_time,
+                            "seq_num": self.seq_num,
+                            "metrics": {
+                                "battery_level": round(self.battery_level, 2),
+                                "signal_strength": self.get_signal_strength(),
+                                "latency_ms": latency_ms,
+                                "seq_num": self.seq_num
+                            }
+                        }
                         self.client.publish(status_topic, json.dumps(status_payload))
                     last_heartbeat_tx = current_time
 
                 # 2. Weather Data Logic (Low Frequency)
                 if current_time - last_data_tx >= self.config['simulation']['data_interval']:
-                    if self.simulate_network_behavior():
-                        data_payload = self.fetch_weather_data()
+                    self.update_battery(current_time, 'data')
+                    if self.battery_level <= 0:
+                        print(f"[{self.city}] Battery depleted during data transmission attempt. Shutting down.")
+                        break
+
+                    success, latency_ms = self.simulate_network_behavior()
+                    if success:
+                        self.seq_num += 1
+                        data_payload = self.fetch_weather_data(latency_ms)
                         if data_payload:
                             data_topic = f"wsn/{self.city}/data"
                             self.client.publish(data_topic, json.dumps(data_payload))
-                            print(f"[{self.city}] Data packet sent successfully.")
+                            print(f"[{self.city}] Data packet sent successfully (Seq: {self.seq_num}, Latency: {latency_ms}ms, Battery: {round(self.battery_level, 2)}%).")
                     last_data_tx = current_time
 
                 time.sleep(1) # Sleep to prevent CPU spiking
