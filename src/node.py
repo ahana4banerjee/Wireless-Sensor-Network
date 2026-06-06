@@ -43,7 +43,7 @@ class SensorNode:
 
     def fetch_weather_data(self):
         """Fetches comprehensive weather features from OpenWeatherMap."""
-        url = f"http://api.openweathermap.org/data/2.5/weather?q={self.city}&appid={API_KEY}&units=metric"
+        url = f"https://api.openweathermap.org/data/2.5/weather?q={self.city}&appid={API_KEY}&units=metric"
         try:
             response = requests.get(url, timeout=10)
             response.raise_for_status()
