@@ -9,3 +9,5 @@ __pycache__/
 *.log
 
 data/logs/*.csv
+
+data/processed/*.csv
