@@ -42,6 +42,14 @@ Completed:
 * Aggregated historical dataset merging (`wsn_dataset.csv` with 2,370+ rows)
 * Unsupervised Anomaly Detection using Isolation Forest (`anomaly_flag` column added)
 * Exploratory Data Analysis & visual distribution plotting (Matplotlib)
+* Dual Environmental Predictor Pipeline: Temperature & Humidity linear regression forecasting models persisted in `models/`
+* Production REST API Gateway built with FastAPI, Uvicorn, and Pydantic (CORS integrated)
+* High-fidelity client dashboard built with React, Vite, Tailwind CSS v4, and Recharts
+* Interactive SVG WSN Topology visualization showing animated connections and dynamic city statuses (Green/Yellow/Red)
+* Node hover tooltips mapping live battery, RSSI signal, latency, and packet loss metrics
+* Live Event Stream sidebar panel with auto-scrolling refs and risk severity indicators
+* Real-time master dataset auto-merging integrated into backend callback loops
+* Performance optimizations: route code-splitting (lazy loading), custom layout skeletons, and spin loaders that resolve cascading renders and optimize build sizes below 500 kB
 
 Current Dataset:
 
@@ -61,25 +69,8 @@ Approximately:
 
 ### Remaining Work in Phase 1
 
-#### Step 1: Frontend Development
-
-Build React Dashboard:
-
-* Live sensor monitoring
-* Node status
-* Network health
-* Weather trends
-* Alerts
-* Analytics
-
-React is intentionally chosen instead of Streamlit to provide a better user experience and a production-style frontend architecture.
-
----
-
-#### Step 2: Predictive Machine Learning
-
-* Temperature prediction
-* Network behavior analysis
+* **Network Behavior Prediction**: Forecast network diagnostics (packet loss rates and latency trends).
+* **UI Polish and Fixes**: Fine-tune layout details, transitions, and minor diagnostics fixes.
 
 ---
 
@@ -162,11 +153,14 @@ anomaly_flag
 
 # Technologies
 
-## Backend
+## Backend & API
 
 * Python
 * pandas
 * paho-mqtt
+* FastAPI
+* Uvicorn
+* Pydantic
 
 ## Communication
 
@@ -179,6 +173,10 @@ anomaly_flag
 ## Frontend
 
 * React
+* Vite
+* Tailwind CSS v4
+* Recharts
+* Lucide React
 
 ## Machine Learning & Visualization
 
@@ -216,16 +214,37 @@ Run the subscriber backend. It will perform automatic schema migrations on exist
 ```
 
 ### 3. Launch the Virtual WSN Nodes
-You can launch multiple virtual nodes (e.g., Delhi, Hyderabad) in separate terminals using:
+You can launch all virtual nodes in parallel using the master runner:
+```bash
+.venv\Scripts\python main.py
+```
+Or launch a single city node manually:
 ```bash
 .venv\Scripts\python src/node.py --city Delhi
-.venv\Scripts\python src/node.py --city Hyderabad
 ```
 
-### 4. Run the Data Pipeline & EDA
-To update the battery history logs, compile the unified dataset, identify anomalies, and regenerate exploratory plots:
+### 4. Run the Prediction & Diagnostics Pipelines
+To train the environmental predictor and persist the model pickles:
+```bash
+.venv\Scripts\python src/ml/environment_predictor.py
+```
+To update the battery history logs, aggregate the unified dataset, and regenerate EDA summaries:
 ```bash
 .venv\Scripts\python src/utils/update_battery_history.py
+```
+
+### 5. Start the FastAPI REST Gateway
+Run the API web server to expose endpoints on port 8000:
+```bash
+.venv\Scripts\uvicorn src.api.main:app --port 8000
+```
+
+### 6. Start the Client UI Dashboard
+Navigate to the dashboard directory, install dependencies, and run the Vite local development server:
+```bash
+cd dashboard
+npm install
+npm run dev
 ```
 
 ---
