@@ -4,4 +4,8 @@ python-dotenv
 pandas
 scikit-learn
 matplotlib
-joblib
+joblib
+fastapi
+uvicorn
+pydantic
+
