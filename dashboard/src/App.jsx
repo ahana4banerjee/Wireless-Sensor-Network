@@ -7,13 +7,14 @@ import Alerts from './components/pages/Alerts';
 import { wsnApi } from './services/api';
 
 export default function App() {
-  const [currentPage, setCurrentPage] = useState('overview');
+  const [currentPage, setCurrentPage] = useState('mission-control');
   const [autoRefresh, setAutoRefresh] = useState(true);
   
   // Data States
   const [nodesData, setNodesData] = useState(null);
   const [liveData, setLiveData] = useState([]);
   const [alertsData, setAlertsData] = useState([]);
+  const [analyticsSummary, setAnalyticsSummary] = useState(null);
   const [apiOnline, setApiOnline] = useState(false);
   const [loading, setLoading] = useState(true);
   const [timeStr, setTimeStr] = useState(new Date().toLocaleTimeString());
@@ -39,16 +40,18 @@ export default function App() {
         setApiOnline(true);
 
         // Fetch WSN states in parallel
-        const [nodesRes, liveRes, alertsRes] = await Promise.all([
+        const [nodesRes, liveRes, alertsRes, summaryRes] = await Promise.all([
           wsnApi.getNodes(),
           wsnApi.getLiveData(),
-          wsnApi.getAlerts(false) // Dynamic active alerts only for counting
+          wsnApi.getAlerts(false), // Dynamic active alerts only for counting
+          wsnApi.getAnalyticsSummary()
         ]);
 
         if (!isMounted) return;
         setNodesData(nodesRes);
         setLiveData(liveRes);
         setAlertsData(alertsRes);
+        setAnalyticsSummary(summaryRes);
       } catch (error) {
         console.error("Dashboard failed to retrieve live data:", error);
         if (isMounted) setApiOnline(false);
@@ -78,16 +81,16 @@ export default function App() {
   // Page switcher router mapping
   const renderPage = () => {
     switch (currentPage) {
-      case 'overview':
-        return <Overview nodesData={nodesData} liveData={liveData} alertsData={alertsData} loading={loading} />;
-      case 'analytics':
+      case 'mission-control':
+        return <Overview nodesData={nodesData} liveData={liveData} alertsData={alertsData} analyticsSummary={analyticsSummary} loading={loading} />;
+      case 'network-intelligence':
         return <Analytics />;
-      case 'predictions':
+      case 'predictive-analytics':
         return <Predictions />;
-      case 'alerts':
+      case 'incident-center':
         return <Alerts />;
       default:
-        return <Overview nodesData={nodesData} liveData={liveData} alertsData={alertsData} loading={loading} />;
+        return <Overview nodesData={nodesData} liveData={liveData} alertsData={alertsData} analyticsSummary={analyticsSummary} loading={loading} />;
     }
   };
 
@@ -108,7 +111,12 @@ export default function App() {
           {/* Header breadcrumb bar */}
           <div className="flex justify-between items-center bg-slate-950/40 border border-slate-900/50 backdrop-blur-md px-6 py-3.5 rounded-2xl">
             <div className="text-xs font-semibold text-slate-400">
-              System Gateway: <span className="text-slate-100">Intelligent-WSN</span> / <span className="text-violet-400 capitalize">{currentPage}</span>
+              System Gateway: <span className="text-slate-100">Intelligent-WSN</span> / <span className="text-violet-400">
+                {currentPage === 'mission-control' && 'Mission Control'}
+                {currentPage === 'network-intelligence' && 'Network Intelligence'}
+                {currentPage === 'predictive-analytics' && 'Predictive Analytics'}
+                {currentPage === 'incident-center' && 'Incident Center'}
+              </span>
             </div>
             <div className="text-xs text-slate-500 font-medium">
               Simulation Time: <span className="text-slate-300 font-semibold">{timeStr}</span>

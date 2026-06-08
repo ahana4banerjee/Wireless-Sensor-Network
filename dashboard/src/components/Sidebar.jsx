@@ -3,11 +3,12 @@ import { LayoutDashboard, BarChart3, Binary, Bell, RefreshCw, Radio, ShieldAlert
 
 export default function Sidebar({ currentPage, setCurrentPage, autoRefresh, setAutoRefresh, apiOnline }) {
   const menuItems = [
-    { id: 'overview', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'analytics', label: 'Analytics', icon: BarChart3 },
-    { id: 'predictions', label: 'Predictions', icon: Binary },
-    { id: 'alerts', label: 'Alerts', icon: Bell },
+    { id: 'mission-control', label: 'Mission Control', icon: LayoutDashboard },
+    { id: 'network-intelligence', label: 'Network Intelligence', icon: BarChart3 },
+    { id: 'predictive-analytics', label: 'Predictive Analytics', icon: Binary },
+    { id: 'incident-center', label: 'Incident Center', icon: Bell },
   ];
+
 
   return (
     <aside className="w-64 bg-slate-950 border-r border-slate-900 flex flex-col justify-between h-screen sticky top-0 p-6">
