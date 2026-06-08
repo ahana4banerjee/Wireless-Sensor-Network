@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { wsnApi } from '../../services/api';
-import { AlertCircle, ShieldAlert, History, Activity, Radio, RefreshCw } from 'lucide-react';
+import { AlertCircle, ShieldAlert, History, RefreshCw } from 'lucide-react';
 
 export default function Alerts() {
   const [activeAlerts, setActiveAlerts] = useState([]);

@@ -1,5 +1,4 @@
-import React from 'react';
-import { LayoutDashboard, BarChart3, Binary, Bell, RefreshCw, Radio, ShieldAlert } from 'lucide-react';
+import { LayoutDashboard, BarChart3, Binary, Bell, Radio } from 'lucide-react';
 
 export default function Sidebar({ currentPage, setCurrentPage, autoRefresh, setAutoRefresh, apiOnline }) {
   const menuItems = [

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { wsnApi } from '../../services/api';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ScatterChart, Scatter } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { BrainCircuit, Info, Thermometer, Droplets } from 'lucide-react';
 
 export default function Predictions() {
