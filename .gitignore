@@ -11,3 +11,5 @@ __pycache__/
 data/logs/*.csv
 
 data/processed/*.csv
+
+models/*

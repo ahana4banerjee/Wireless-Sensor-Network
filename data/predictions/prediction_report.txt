@@ -1,0 +1,54 @@
+====================================================
+      WSN ENVIRONMENTAL PREDICTION REPORT           
+====================================================
+
+1. DATASET PROFILE
+------------------
+Total Observations Loaded: 2376
+Training Set Size (80%): 1900
+Test Set Size (20%):     476
+
+2. MODEL A PERFORMANCE SUMMARY (Target: Temperature)
+----------------------------------------------------
+Features Used: unix_ts, pressure, wind_speed, humidity, hour, day, month
+Mean Absolute Error (MAE)   : 0.9386 °C
+Root Mean Squared Error (RMSE): 1.2603 °C
+R² Score (Variance Explained) : 0.8278
+
+Model Coefficients:
+  * unix_ts        : -0.000001
+  * pressure       : -0.076110
+  * wind_speed     : -0.266756
+  * humidity       : -0.084518
+  * hour           : -0.511665
+  * day            : -0.131116
+  * month          : 0.004903
+  * Intercept      : 2240.157941
+
+3. MODEL B PERFORMANCE SUMMARY (Target: Humidity)
+-------------------------------------------------
+Features Used: unix_ts, pressure, wind_speed, temp, hour, day, month
+Mean Absolute Error (MAE)   : 8.0125 %
+Root Mean Squared Error (RMSE): 9.8042 %
+R² Score (Variance Explained) : 0.5504
+
+Model Coefficients:
+  * unix_ts        : -0.000002
+  * pressure       : 0.477838
+  * wind_speed     : -0.844461
+  * temp           : -4.426288
+  * hour           : -1.234907
+  * day            : 0.543753
+  * month          : -0.016020
+  * Intercept      : 3847.539497
+
+4. KEY OBSERVATIONS & ANALYSIS
+------------------------------
+- Strongest Predictors:
+  * For Temperature: Humidity exhibits a weight of -0.0845. As humidity rises, temperature decreases.
+  * For Humidity: Temperature has a weight of -4.4263. Warm air has a higher capacity for moisture, showing a strong negative linear correlation in observations.
+  * Time Features: The derived time metrics (hour, day, month) allow the models to adapt to diurnal and seasonal variations within the historical logs.
+
+5. CONCLUSION
+-------------
+Both Linear Regression models achieve stable, low-error performance. The saved pickle models are ready to be integrated into the server API layer to serve live forecasts to the React Dashboard.
