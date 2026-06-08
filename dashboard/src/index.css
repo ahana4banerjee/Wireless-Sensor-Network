@@ -60,3 +60,17 @@ html, body {
   border-color: #475569;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
 }
+
+@keyframes flow-active {
+  from {
+    stroke-dashoffset: 24;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.flow-line-active {
+  stroke-dasharray: 8, 4;
+  animation: flow-active 1.2s linear infinite !important;
+}

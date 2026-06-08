@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   Wifi, 
   Battery, 
@@ -16,6 +16,8 @@ import {
 } from 'lucide-react';
 
 export default function Overview({ nodesData, liveData, alertsData, analyticsSummary, loading }) {
+  const [showBrokerTooltip, setShowBrokerTooltip] = useState(false);
+
   // Compute summaries
   const totalNodes = nodesData?.total_nodes || 5;
   const onlineNodes = nodesData?.nodes?.filter(n => n.status === "ONLINE").length || 0;
@@ -139,18 +141,35 @@ export default function Overview({ nodesData, liveData, alertsData, analyticsSum
               <rect width="100%" height="100%" fill="url(#grid)" rx="4" />
 
               {/* Connection Lines from Broker down to cities */}
-              <path d="M 300 45 L 300 90 L 80 90 L 80 140" fill="none" stroke={nodeStatusMap["Delhi"] === "ONLINE" ? "#10b981" : "#f43f5e"} strokeWidth="1.5" strokeDasharray={nodeStatusMap["Delhi"] === "OFFLINE" ? "4,4" : "none"} className="transition-all duration-300" />
-              <path d="M 300 45 L 300 90 L 190 90 L 190 140" fill="none" stroke={nodeStatusMap["Hyderabad"] === "ONLINE" ? "#10b981" : "#f43f5e"} strokeWidth="1.5" strokeDasharray={nodeStatusMap["Hyderabad"] === "OFFLINE" ? "4,4" : "none"} className="transition-all duration-300" />
-              <path d="M 300 45 L 300 140" fill="none" stroke={nodeStatusMap["Mumbai"] === "ONLINE" ? "#10b981" : "#f43f5e"} strokeWidth="1.5" strokeDasharray={nodeStatusMap["Mumbai"] === "OFFLINE" ? "4,4" : "none"} className="transition-all duration-300" />
-              <path d="M 300 45 L 300 90 L 410 90 L 410 140" fill="none" stroke={nodeStatusMap["Bangalore"] === "ONLINE" ? "#10b981" : "#f43f5e"} strokeWidth="1.5" strokeDasharray={nodeStatusMap["Bangalore"] === "OFFLINE" ? "4,4" : "none"} className="transition-all duration-300" />
-              <path d="M 300 45 L 300 90 L 520 90 L 520 140" fill="none" stroke={nodeStatusMap["Secunderabad"] === "ONLINE" ? "#10b981" : "#f43f5e"} strokeWidth="1.5" strokeDasharray={nodeStatusMap["Secunderabad"] === "OFFLINE" ? "4,4" : "none"} className="transition-all duration-300" />
+              <path d="M 300 55 L 300 90 L 80 90 L 80 140" fill="none" stroke={nodeStatusMap["Delhi"] === "ONLINE" ? "#10b981" : "#f43f5e"} strokeWidth="1.5" className={`transition-all duration-300 ${nodeStatusMap["Delhi"] === "ONLINE" ? "flow-line-active" : ""}`} strokeDasharray={nodeStatusMap["Delhi"] === "ONLINE" ? "8,4" : "4,4"} />
+              <path d="M 300 55 L 300 90 L 190 90 L 190 140" fill="none" stroke={nodeStatusMap["Hyderabad"] === "ONLINE" ? "#10b981" : "#f43f5e"} strokeWidth="1.5" className={`transition-all duration-300 ${nodeStatusMap["Hyderabad"] === "ONLINE" ? "flow-line-active" : ""}`} strokeDasharray={nodeStatusMap["Hyderabad"] === "ONLINE" ? "8,4" : "4,4"} />
+              <path d="M 300 55 L 300 140" fill="none" stroke={nodeStatusMap["Mumbai"] === "ONLINE" ? "#10b981" : "#f43f5e"} strokeWidth="1.5" className={`transition-all duration-300 ${nodeStatusMap["Mumbai"] === "ONLINE" ? "flow-line-active" : ""}`} strokeDasharray={nodeStatusMap["Mumbai"] === "ONLINE" ? "8,4" : "4,4"} />
+              <path d="M 300 55 L 300 90 L 410 90 L 410 140" fill="none" stroke={nodeStatusMap["Bangalore"] === "ONLINE" ? "#10b981" : "#f43f5e"} strokeWidth="1.5" className={`transition-all duration-300 ${nodeStatusMap["Bangalore"] === "ONLINE" ? "flow-line-active" : ""}`} strokeDasharray={nodeStatusMap["Bangalore"] === "ONLINE" ? "8,4" : "4,4"} />
+              <path d="M 300 55 L 300 90 L 520 90 L 520 140" fill="none" stroke={nodeStatusMap["Secunderabad"] === "ONLINE" ? "#10b981" : "#f43f5e"} strokeWidth="1.5" className={`transition-all duration-300 ${nodeStatusMap["Secunderabad"] === "ONLINE" ? "flow-line-active" : ""}`} strokeDasharray={nodeStatusMap["Secunderabad"] === "ONLINE" ? "8,4" : "4,4"} />
 
-              {/* Broker Node */}
-              <g transform="translate(260, 15)">
+              {/* Broker Node (shifted down from Y=15 to Y=25) */}
+              <g transform="translate(260, 25)">
                 <rect x="0" y="0" width="80" height="32" rx="4" fill="#0f172a" stroke="#475569" strokeWidth="1.5" />
                 <text x="40" y="19" textAnchor="middle" fill="#f8fafc" fontSize="10" fontWeight="bold" fontFamily="monospace">MQTT Broker</text>
-                <circle cx="10" cy="8" r="2.5" fill="#10b981" />
+                <circle 
+                  cx="10" 
+                  cy="8" 
+                  r="3.5" 
+                  fill="#10b981" 
+                  className="cursor-pointer hover:scale-125 transition-all duration-150"
+                  onMouseEnter={() => setShowBrokerTooltip(true)}
+                  onMouseLeave={() => setShowBrokerTooltip(false)}
+                />
               </g>
+
+              {/* Dynamic Broker Tooltip (shifted down to Y=2, completely inside the viewBox) */}
+              {showBrokerTooltip && (
+                <g transform="translate(250, 2)" className="pointer-events-none">
+                  <rect x="0" y="0" width="100" height="20" rx="3" fill="#022c22" stroke="#10b981" strokeWidth="1" />
+                  <polygon points="20,20 17,24 23,24" fill="#10b981" />
+                  <text x="50" y="13" textAnchor="middle" fill="#34d399" fontSize="9" fontWeight="bold" fontFamily="monospace">broker active</text>
+                </g>
+              )}
 
               {/* Node Delhi */}
               <g transform="translate(40, 140)">
