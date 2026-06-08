@@ -17,49 +17,53 @@ export default function App() {
   const [apiOnline, setApiOnline] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Core API Fetch function
-  const fetchAllData = async () => {
-    try {
-      // Health check first
-      await wsnApi.getHealth();
-      setApiOnline(true);
-
-      // Fetch WSN states in parallel
-      const [nodesRes, liveRes, alertsRes] = await Promise.all([
-        wsnApi.getNodes(),
-        wsnApi.getLiveData(),
-        wsnApi.getAlerts(false) // Dynamic active alerts only for counting
-      ]);
-
-      setNodesData(nodesRes);
-      setLiveData(liveRes);
-      setAlertsData(alertsRes);
-    } catch (error) {
-      console.error("Dashboard failed to retrieve live data:", error);
-      setApiOnline(false);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Run initial fetch on mount
+  // Core API Fetch and polling lifecycle
   useEffect(() => {
-    setLoading(true);
+    let isMounted = true;
+
+    const fetchAllData = async () => {
+      try {
+        // Health check first
+        await wsnApi.getHealth();
+        if (!isMounted) return;
+        setApiOnline(true);
+
+        // Fetch WSN states in parallel
+        const [nodesRes, liveRes, alertsRes] = await Promise.all([
+          wsnApi.getNodes(),
+          wsnApi.getLiveData(),
+          wsnApi.getAlerts(false) // Dynamic active alerts only for counting
+        ]);
+
+        if (!isMounted) return;
+        setNodesData(nodesRes);
+        setLiveData(liveRes);
+        setAlertsData(alertsRes);
+      } catch (error) {
+        console.error("Dashboard failed to retrieve live data:", error);
+        if (isMounted) setApiOnline(false);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    // Initial fetch
     fetchAllData();
-  }, []);
 
-  // Poll at 10-second intervals if autoRefresh switch is active
-  useEffect(() => {
+    // Poll at 10-second intervals if autoRefresh switch is active
     let intervalId = null;
     if (autoRefresh) {
       intervalId = setInterval(fetchAllData, 10000);
     }
+
     return () => {
+      isMounted = false;
       if (intervalId) {
         clearInterval(intervalId);
       }
     };
   }, [autoRefresh]);
+
 
   // Page switcher router mapping
   const renderPage = () => {
