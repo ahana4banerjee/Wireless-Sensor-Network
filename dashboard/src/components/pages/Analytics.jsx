@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { wsnApi } from '../../services/api';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart, Pie } from 'recharts';
 import { Database, AlertOctagon } from 'lucide-react';
@@ -13,7 +13,6 @@ export default function Analytics() {
   useEffect(() => {
     async function fetchAnalytics() {
       try {
-        setLoading(true);
         const [summaryRes, anomaliesRes] = await Promise.all([
           wsnApi.getAnalyticsSummary(),
           wsnApi.getAnomalies(100) // Fetch up to 100 recent anomalies for charting
@@ -64,7 +63,49 @@ export default function Analytics() {
   const conditionData = getConditionAnomalyCounts();
 
   if (loading) {
-    return <div className="text-slate-400 py-10 text-sm">Loading statistical analytics from dataset...</div>;
+    return (
+      <div className="flex flex-col gap-8 w-full animate-pulse">
+        {/* Header */}
+        <div>
+          <div className="h-7 w-48 bg-slate-900 rounded mb-2" />
+          <div className="h-4 w-96 bg-slate-900 rounded" />
+        </div>
+
+        {/* 5 Summary cards skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="glass-card p-5 h-24 flex flex-col justify-between">
+              <div className="h-2.5 w-24 bg-slate-900 rounded" />
+              <div className="h-6 w-16 bg-slate-900 rounded" />
+              <div className="h-2 w-20 bg-slate-900/50 rounded mt-1" />
+            </div>
+          ))}
+        </div>
+
+        {/* 2 Charts grid skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {[...Array(2)].map((_, i) => (
+            <div key={i} className="glass-card p-6 h-80 flex flex-col gap-4">
+              <div className="h-4 w-40 bg-slate-900 rounded" />
+              <div className="flex-1 bg-slate-950/40 rounded flex items-center justify-center">
+                <div className="w-8 h-8 border-2 border-slate-800/40 border-t-violet-500 rounded-full animate-spin" />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Audit Log Table skeleton */}
+        <div className="glass-card p-6 flex flex-col gap-4">
+          <div className="h-5 w-56 bg-slate-900 rounded" />
+          <div className="flex flex-col gap-3">
+            <div className="h-5 bg-slate-950 rounded" />
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="h-8 bg-slate-950/40 rounded" />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (error) {

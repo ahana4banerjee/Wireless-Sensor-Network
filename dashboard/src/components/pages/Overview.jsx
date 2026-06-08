@@ -11,7 +11,7 @@ import {
   Clock
 } from 'lucide-react';
 
-export default function Overview({ nodesData, liveData, alertsData, analyticsSummary }) {
+export default function Overview({ nodesData, liveData, alertsData, analyticsSummary, loading }) {
   const [showBrokerTooltip, setShowBrokerTooltip] = useState(false);
   const [hoveredNode, setHoveredNode] = useState(null);
 
@@ -259,6 +259,53 @@ export default function Overview({ nodesData, liveData, alertsData, analyticsSum
       packetLoss: `${record.packet_loss_rate.toFixed(1)}%`
     };
   };
+
+  if (loading) {
+    return (
+      <div className="flex flex-col gap-6 w-full animate-pulse text-slate-400">
+        {/* SECTION A: EXECUTIVE STATUS BAR SKELETON */}
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-3 bg-[#0b1121] border border-slate-900 p-4 rounded-md h-20">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="flex flex-col gap-2 border-r border-slate-800/60 last:border-r-0 px-2 justify-center">
+              <div className="h-2.5 w-16 bg-slate-900 rounded" />
+              <div className="h-4 w-12 bg-slate-900 rounded" />
+            </div>
+          ))}
+        </div>
+
+        {/* SECTION B: TOPOLOGY, HEALTH OVERVIEW & EVENT STREAM SKELETON */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Left Column (Schematic & Health Grid) */}
+          <div className="lg:col-span-8 flex flex-col gap-6">
+            {/* Topology Schematic Placeholder */}
+            <div className="glass-card p-4 h-64 flex flex-col gap-3">
+              <div className="h-3 w-40 bg-slate-900 rounded mb-2" />
+              <div className="flex-1 bg-slate-950/40 rounded flex items-center justify-center">
+                <div className="w-8 h-8 border-2 border-slate-850 border-t-violet-500 rounded-full animate-spin" />
+              </div>
+            </div>
+
+            {/* Health Grid Placeholder */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="glass-card p-4 h-28 flex flex-col justify-between" />
+              ))}
+            </div>
+          </div>
+
+          {/* Right Column (Event Stream Placeholder) */}
+          <div className="lg:col-span-4 glass-card p-4 h-[440px] flex flex-col gap-4">
+            <div className="h-3 w-32 bg-slate-900 rounded mb-2" />
+            <div className="flex-1 bg-slate-950/40 rounded flex flex-col gap-2.5 p-2">
+              {[...Array(7)].map((_, i) => (
+                <div key={i} className="h-10 bg-slate-900/40 rounded" />
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-6 w-full text-slate-200">

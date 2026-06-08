@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { wsnApi } from '../../services/api';
 import { AlertCircle, ShieldAlert, History, RefreshCw } from 'lucide-react';
 
@@ -8,7 +8,55 @@ export default function Alerts() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const fetchAlertsData = async () => {
+  const fetchAlertsData = useCallback(async () => {
+  try {
+    const [activeRes, combinedRes] = await Promise.all([
+      wsnApi.getAlerts(false),
+      wsnApi.getAlerts(true, 100)
+    ]);
+
+    setActiveAlerts(activeRes);
+
+    const activeKeys = new Set(
+      activeRes.map(
+        a => `${a.node_id}-${a.alert_type}-${a.timestamp}`
+      )
+    );
+
+    const pureHistory = combinedRes.filter(
+      a => !activeKeys.has(
+        `${a.node_id}-${a.alert_type}-${a.timestamp}`
+      )
+    );
+
+    setHistoryAlerts(pureHistory);
+    setError(null);
+  } catch (err) {
+    console.error("Failed to load alerts:", err);
+    setError(
+      "Alerts feed unreachable. Ensure the FastAPI subscriber backend is running."
+    );
+  } finally {
+    setLoading(false);
+  }
+}, []);
+
+  const handleForceRefresh = () => {
+      setLoading(true);
+      fetchAlertsData();
+    };
+
+  useEffect(() => {
+    fetchAlertsData();
+
+    const timer = setInterval(() => {
+      fetchAlertsData();
+    }, 10000);
+
+    return () => clearInterval(timer);
+  }, [fetchAlertsData]);
+
+  {/*const fetchAlertsData = async () => {
     try {
       const [activeRes, combinedRes] = await Promise.all([
         wsnApi.getAlerts(false), // Get active dynamic alerts only
@@ -33,15 +81,50 @@ export default function Alerts() {
   };
 
   useEffect(() => {
-    setLoading(true);
     fetchAlertsData();
     // Setting up polling refresh inside the page as well
     const timer = setInterval(fetchAlertsData, 10000);
     return () => clearInterval(timer);
   }, []);
+*/}
 
   if (loading && activeAlerts.length === 0 && historyAlerts.length === 0) {
-    return <div className="text-slate-400 py-10 text-sm">Loading active alarms and historical alerts feed...</div>;
+    return (
+      <div className="flex flex-col gap-8 w-full animate-pulse">
+        {/* Header */}
+        <div className="flex justify-between items-start">
+          <div>
+            <div className="h-7 w-48 bg-slate-900 rounded mb-2" />
+            <div className="h-4 w-96 bg-slate-900 rounded" />
+          </div>
+          <div className="h-8 w-28 bg-slate-900 rounded-xl" />
+        </div>
+
+        {/* Grid: 2 columns */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          {/* Active Alarms list skeleton */}
+          <div className="lg:col-span-5 flex flex-col gap-4">
+            <div className="h-6 w-48 bg-slate-900 rounded" />
+            <div className="flex flex-col gap-4">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="glass-card p-4 h-28 flex flex-col justify-between" />
+              ))}
+            </div>
+          </div>
+
+          {/* Historical Feed skeleton */}
+          <div className="lg:col-span-7 flex flex-col gap-4">
+            <div className="h-6 w-56 bg-slate-900 rounded" />
+            <div className="glass-card p-6 flex flex-col gap-3">
+              <div className="h-5 bg-slate-950 rounded" />
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="h-8 bg-slate-950/40 rounded" />
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   // Helper for alert colors
@@ -60,10 +143,13 @@ export default function Alerts() {
           <p className="text-slate-400 text-sm mt-1">Real-time node failures, threshold breaches, and anomaly notifications.</p>
         </div>
         <button
-          onClick={fetchAlertsData}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-slate-900 hover:bg-slate-800 text-slate-300 transition-colors border border-slate-900 cursor-pointer"
+          onClick={handleForceRefresh}
+          disabled={loading}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-slate-900 hover:bg-slate-800 text-slate-300 transition-colors border border-slate-900 cursor-pointer ${
+            loading ? 'opacity-65 cursor-not-allowed' : ''
+          }`}
         >
-          <RefreshCw className="w-3.5 h-3.5" /> Force Refresh
+          <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} /> Force Refresh
         </button>
       </div>
 
