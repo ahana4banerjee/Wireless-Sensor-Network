@@ -13,6 +13,7 @@ import {
 
 export default function Overview({ nodesData, liveData, alertsData, analyticsSummary }) {
   const [showBrokerTooltip, setShowBrokerTooltip] = useState(false);
+  const [hoveredNode, setHoveredNode] = useState(null);
 
   // Operational events list state (up to 100 entries)
   const [events, setEvents] = useState(() => {
@@ -215,6 +216,49 @@ export default function Overview({ nodesData, liveData, alertsData, analyticsSum
 
   // Slice last 5 alerts
   const recentAlerts = alertsData?.slice(0, 5) || [];
+
+  const getNodeColor = (cityName) => {
+    const status = nodeStatusMap[cityName] || "OFFLINE";
+    if (status === "OFFLINE") return { hex: "#ef4444", text: "text-rose-500", name: "Fault" };
+
+    const record = liveData.find(row => row.city === cityName);
+    if (!record) return { hex: "#10b981", text: "text-emerald-500", name: "Healthy" };
+
+    if (record.battery_level <= 10.0 || record.latency_ms >= 1000.0) {
+      return { hex: "#ef4444", text: "text-rose-500", name: "Fault" };
+    }
+    if (
+      record.battery_level <= 25.0 ||
+      record.latency_ms >= 500.0 ||
+      record.packet_loss_rate >= 5.0 ||
+      record.signal_strength <= -85.0
+    ) {
+      return { hex: "#f59e0b", text: "text-amber-500", name: "Warning" };
+    }
+    return { hex: "#10b981", text: "text-emerald-500", name: "Healthy" };
+  };
+
+  const getNodeMetrics = (cityName) => {
+    const record = liveData.find(row => row.city === cityName);
+    if (!record) {
+      const nodeInfo = nodesData?.nodes?.find(n => n.node_id === cityName);
+      return {
+        status: nodeInfo?.status || "OFFLINE",
+        battery: nodeInfo ? `${nodeInfo.battery_level.toFixed(0)}%` : "0%",
+        signal: nodeInfo ? `${nodeInfo.signal_strength.toFixed(0)} dBm` : "-100 dBm",
+        latency: "N/A",
+        packetLoss: "N/A"
+      };
+    }
+    const status = nodeStatusMap[cityName] || "OFFLINE";
+    return {
+      status,
+      battery: `${record.battery_level.toFixed(1)}%`,
+      signal: `${record.signal_strength.toFixed(0)} dBm`,
+      latency: `${record.latency_ms.toFixed(0)} ms`,
+      packetLoss: `${record.packet_loss_rate.toFixed(1)}%`
+    };
+  };
 
   return (
     <div className="flex flex-col gap-6 w-full text-slate-200">
@@ -551,7 +595,187 @@ export default function Overview({ nodesData, liveData, alertsData, analyticsSum
         </div>
       </div>
 
-      {/* SECTION C: LIVE NODE TELEMETRY TABLE (HIGH DENSITY) */}
+      {/* SECTION C: INTERACTIVE WSN TOPOLOGY */}
+      <div className="glass-card p-4 flex flex-col gap-3">
+        <div className="flex justify-between items-center border-b border-slate-800/80 pb-2">
+          <h4 className="text-xs uppercase font-mono font-bold tracking-wider text-slate-400 flex items-center gap-1.5">
+            <Network className="w-4 h-4 text-violet-500" /> Interactive WSN Topology
+          </h4>
+          <span className="text-[10px] font-mono text-slate-500">Live Health Diagnostics & Link States</span>
+        </div>
+
+        <div className="flex items-center justify-center bg-slate-950/40 p-4 rounded border border-slate-850">
+          <svg viewBox="0 0 600 240" className="w-full h-auto text-slate-400 overflow-visible">
+            <defs>
+              <pattern id="topology-grid" width="20" height="20" patternUnits="userSpaceOnUse">
+                <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(51, 65, 85, 0.08)" strokeWidth="1" />
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#topology-grid)" rx="4" />
+
+            {/* Main trunk: Broker to horizontal bus line */}
+            <path 
+              d="M 300 52.5 L 300 95" 
+              fill="none" 
+              stroke="#8b5cf6" 
+              strokeWidth="2" 
+              className="flow-line-active" 
+            />
+
+            {/* Horizontal Bus Line */}
+            <line x1="80" y1="95" x2="520" y2="95" stroke="#334155" strokeWidth="2" />
+
+            {/* Central Broker Node */}
+            <g transform="translate(245, 17.5)">
+              <rect x="0" y="0" width="110" height="35" rx="6" fill="#0f172a" stroke="#8b5cf6" strokeWidth="1.5" />
+              <text x="55" y="21" textAnchor="middle" fill="#f8fafc" fontSize="10" fontWeight="bold" fontFamily="monospace">MQTT Broker</text>
+              <circle cx="12" cy="9" r="3.5" fill="#10b981" className="animate-pulse" />
+            </g>
+
+            {/* Nodes Render Loop */}
+            {[
+              { id: "HYD", name: "Hyderabad", x: 80 },
+              { id: "DEL", name: "Delhi", x: 190 },
+              { id: "MUM", name: "Mumbai", x: 300 },
+              { id: "BLR", name: "Bangalore", x: 410 },
+              { id: "SEC", name: "Secunderabad", x: 520 }
+            ].map(city => {
+              const nodeColor = getNodeColor(city.name);
+              const metrics = getNodeMetrics(city.name);
+              const isHovered = hoveredNode === city.id;
+              const isOnline = nodeStatusMap[city.name] === "ONLINE";
+              const isHealthyOrWarning = isOnline && nodeColor.name !== "Fault";
+
+              return (
+                <g 
+                  key={city.id}
+                  className="cursor-pointer"
+                  onMouseEnter={() => setHoveredNode(city.id)}
+                  onMouseLeave={() => setHoveredNode(null)}
+                >
+                  {/* Vertical Connection Line */}
+                  <path 
+                    d={`M ${city.x} 95 L ${city.x} 145`}
+                    fill="none" 
+                    stroke={nodeColor.hex} 
+                    strokeWidth={isHovered ? 2.5 : 1.5}
+                    className={`transition-all duration-200 ${isHealthyOrWarning ? 'flow-line-active' : ''}`}
+                  />
+
+                  {/* Node Rect Box */}
+                  <g transform={`translate(${city.x - 32}, 145)`}>
+                    <rect 
+                      x="0" 
+                      y="0" 
+                      width="64" 
+                      height="36" 
+                      rx="4" 
+                      fill="#0b1121" 
+                      stroke={nodeColor.hex} 
+                      strokeWidth={isHovered ? 2.5 : 1.5} 
+                      className="transition-all duration-200"
+                    />
+                    {/* Node code label */}
+                    <text 
+                      x="32" 
+                      y="22" 
+                      textAnchor="middle" 
+                      fill={isHovered ? "#ffffff" : "#94a3b8"} 
+                      fontSize="10" 
+                      fontWeight="bold" 
+                      fontFamily="monospace"
+                    >
+                      {city.id}
+                    </text>
+                    {/* Status indicator led dot inside node box */}
+                    <circle 
+                      cx="10" 
+                      cy="10" 
+                      r="3" 
+                      fill={nodeColor.hex}
+                      className={isOnline && nodeColor.name !== "Fault" ? "" : "animate-pulse"}
+                    />
+                  </g>
+
+                  {/* Dynamic Tooltip Overlay */}
+                  {isHovered && (
+                    <g className="pointer-events-none" style={{ zIndex: 50 }}>
+                      {/* Tooltip Background Card */}
+                      <rect 
+                        x={city.x - 80} 
+                        y="45" 
+                        width="160" 
+                        height="90" 
+                        rx="6" 
+                        fill="#070b14" 
+                        stroke={nodeColor.hex} 
+                        strokeWidth="1.5" 
+                      />
+                      {/* Tooltip Arrow */}
+                      <path 
+                        d={`M ${city.x - 6} 135 L ${city.x} 143 L ${city.x + 6} 135 Z`} 
+                        fill={nodeColor.hex} 
+                      />
+                      
+                      {/* Tooltip Content */}
+                      <text 
+                        x={city.x} 
+                        y={60} 
+                        textAnchor="middle" 
+                        fill="#ffffff" 
+                        fontSize="9" 
+                        fontWeight="bold"
+                        fontFamily="sans-serif"
+                      >
+                        {city.name}
+                      </text>
+                      <text 
+                        x={city.x} 
+                        y={72} 
+                        textAnchor="middle" 
+                        fill={nodeColor.hex} 
+                        fontSize="8" 
+                        fontWeight="bold"
+                        fontFamily="monospace"
+                      >
+                        {nodeColor.name.toUpperCase()}
+                      </text>
+
+                      {/* Divider */}
+                      <line 
+                        x1={city.x - 68} 
+                        y1="78" 
+                        x2={city.x + 68} 
+                        y2="78" 
+                        stroke="#1e293b" 
+                        strokeWidth="1" 
+                      />
+
+                      {/* Row 1: Battery */}
+                      <text x={city.x - 68} y="90" fill="#64748b" fontSize="8" fontFamily="sans-serif">Battery</text>
+                      <text x={city.x + 68} y="90" textAnchor="end" fill="#ffffff" fontSize="8" fontWeight="bold" fontFamily="monospace">{metrics.battery}</text>
+
+                      {/* Row 2: Signal */}
+                      <text x={city.x - 68} y="101" fill="#64748b" fontSize="8" fontFamily="sans-serif">Signal</text>
+                      <text x={city.x + 68} y="101" textAnchor="end" fill="#ffffff" fontSize="8" fontWeight="bold" fontFamily="monospace">{metrics.signal}</text>
+
+                      {/* Row 3: Latency */}
+                      <text x={city.x - 68} y="112" fill="#64748b" fontSize="8" fontFamily="sans-serif">Latency</text>
+                      <text x={city.x + 68} y="112" textAnchor="end" fill="#ffffff" fontSize="8" fontWeight="bold" fontFamily="monospace">{metrics.latency}</text>
+
+                      {/* Row 4: Packet Loss */}
+                      <text x={city.x - 68} y="123" fill="#64748b" fontSize="8" fontFamily="sans-serif">Loss</text>
+                      <text x={city.x + 68} y="123" textAnchor="end" fill="#ffffff" fontSize="8" fontWeight="bold" fontFamily="monospace">{metrics.packetLoss}</text>
+                    </g>
+                  )}
+                </g>
+              );
+            })}
+          </svg>
+        </div>
+      </div>
+
+      {/* SECTION D: LIVE NODE TELEMETRY TABLE (HIGH DENSITY) */}
       <div className="glass-card p-4 flex flex-col gap-3">
         <div className="flex justify-between items-center border-b border-slate-800/80 pb-2">
           <h4 className="text-xs uppercase font-mono font-bold tracking-wider text-slate-400 flex items-center gap-1.5">
@@ -615,7 +839,7 @@ export default function Overview({ nodesData, liveData, alertsData, analyticsSum
         </div>
       </div>
 
-      {/* SECTION D: RECENT ALERTS PREVIEW */}
+      {/* SECTION E: RECENT ALERTS PREVIEW */}
       <div className="glass-card p-4 flex flex-col gap-3">
         <div className="flex justify-between items-center border-b border-slate-800/80 pb-2">
           <h4 className="text-xs uppercase font-mono font-bold tracking-wider text-slate-400 flex items-center gap-1.5">
