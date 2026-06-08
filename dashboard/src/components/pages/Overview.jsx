@@ -1,24 +1,18 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { 
-  Wifi, 
-  Battery, 
-  Cpu, 
   Activity, 
   ShieldAlert, 
-  Compass, 
-  Server, 
   Database, 
   TrendingUp, 
   AlertTriangle, 
   CheckCircle,
   Network,
-  Radio,
+  Wifi,
   Clock
 } from 'lucide-react';
 
-export default function Overview({ nodesData, liveData, alertsData, analyticsSummary, loading }) {
+export default function Overview({ nodesData, liveData, alertsData, analyticsSummary }) {
   const [showBrokerTooltip, setShowBrokerTooltip] = useState(false);
-  const [showEventsTooltip, setShowEventsTooltip] = useState(false);
 
   // Operational events list state (up to 100 entries)
   const [events, setEvents] = useState(() => {
@@ -189,7 +183,7 @@ export default function Overview({ nodesData, liveData, alertsData, analyticsSum
   // Compute summaries
   const totalNodes = nodesData?.total_nodes || 5;
   const onlineNodes = nodesData?.nodes?.filter(n => n.status === "ONLINE").length || 0;
-  const activeAlerts = alertsData?.filter(a => a.severity === "CRITICAL").length || 0;
+  
   
   const nodeStatusMap = {};
   const nodeDetailsMap = {};
@@ -210,13 +204,13 @@ export default function Overview({ nodesData, liveData, alertsData, analyticsSum
   // 100 - avgPacketLoss is a standard operational health metric
   const networkHealthScore = (100 - avgPacketLoss).toFixed(1);
   let networkHealthLabel = "OPTIMAL";
-  let networkHealthColor = "text-emerald-400";
+  let networkHealthColor = "border-emerald-500/20 bg-emerald-500/10 text-emerald-400";
   if (avgPacketLoss >= 10.0) {
     networkHealthLabel = "CRITICAL";
-    networkHealthColor = "text-rose-500";
+    networkHealthColor = "border-rose-500/20 bg-rose-500/10 text-rose-400";
   } else if (avgPacketLoss >= 5.0) {
     networkHealthLabel = "DEGRADED";
-    networkHealthColor = "text-amber-500";
+    networkHealthColor = "border-amber-500/20 bg-amber-500/10 text-amber-400";
   }
 
   // Slice last 5 alerts
@@ -440,11 +434,7 @@ export default function Overview({ nodesData, liveData, alertsData, analyticsSum
                 <span className="text-[10px] font-mono text-slate-400 font-bold uppercase tracking-wider">Network Health</span>
                 <div className="flex justify-between items-baseline mt-1">
                   <span className="text-lg font-bold font-mono text-white">{networkHealthScore}%</span>
-                  <span className={`text-[10px] font-mono font-bold px-1.5 py-0.5 border rounded-sm ${
-                    networkHealthLabel === "OPTIMAL" ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-400" :
-                    networkHealthLabel === "DEGRADED" ? "border-amber-500/20 bg-amber-500/10 text-amber-400" :
-                    "border-rose-500/20 bg-rose-500/10 text-rose-400"
-                  }`}>
+                  <span className={`text-[10px] font-mono font-bold px-1.5 py-0.5 border rounded-sm ${networkHealthColor}`}>
                     {networkHealthLabel}
                   </span>
                 </div>

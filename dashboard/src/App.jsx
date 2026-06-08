@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import Sidebar from './components/Sidebar';
-import Overview from './components/pages/Overview';
-import Analytics from './components/pages/Analytics';
-import Predictions from './components/pages/Predictions';
-import Alerts from './components/pages/Alerts';
 import { wsnApi } from './services/api';
+
+const Overview = lazy(() => import('./components/pages/Overview'));
+const Analytics = lazy(() => import('./components/pages/Analytics'));
+const Predictions = lazy(() => import('./components/pages/Predictions'));
+const Alerts = lazy(() => import('./components/pages/Alerts'));
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState('mission-control');
@@ -80,18 +81,24 @@ export default function App() {
 
   // Page switcher router mapping
   const renderPage = () => {
-    switch (currentPage) {
-      case 'mission-control':
-        return <Overview nodesData={nodesData} liveData={liveData} alertsData={alertsData} analyticsSummary={analyticsSummary} loading={loading} />;
-      case 'network-intelligence':
-        return <Analytics />;
-      case 'predictive-analytics':
-        return <Predictions />;
-      case 'incident-center':
-        return <Alerts />;
-      default:
-        return <Overview nodesData={nodesData} liveData={liveData} alertsData={alertsData} analyticsSummary={analyticsSummary} loading={loading} />;
-    }
+    return (
+      <Suspense fallback={<div className="text-slate-400 py-10 font-mono text-sm">Loading module...</div>}>
+        {(() => {
+          switch (currentPage) {
+            case 'mission-control':
+              return <Overview nodesData={nodesData} liveData={liveData} alertsData={alertsData} analyticsSummary={analyticsSummary} />;
+            case 'network-intelligence':
+              return <Analytics />;
+            case 'predictive-analytics':
+              return <Predictions />;
+            case 'incident-center':
+              return <Alerts />;
+            default:
+              return <Overview nodesData={nodesData} liveData={liveData} alertsData={alertsData} analyticsSummary={analyticsSummary} />;
+          }
+        })()}
+      </Suspense>
+    );
   };
 
   return (

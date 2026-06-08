@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { wsnApi } from '../../services/api';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart, Pie } from 'recharts';
 import { Database, AlertOctagon } from 'lucide-react';
 
 
