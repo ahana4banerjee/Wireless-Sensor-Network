@@ -16,6 +16,16 @@ export default function App() {
   const [alertsData, setAlertsData] = useState([]);
   const [apiOnline, setApiOnline] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [timeStr, setTimeStr] = useState(new Date().toLocaleTimeString());
+
+  // Clock interval updates every second
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTimeStr(new Date().toLocaleTimeString());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
 
   // Core API Fetch and polling lifecycle
   useEffect(() => {
@@ -101,7 +111,7 @@ export default function App() {
               System Gateway: <span className="text-slate-100">Intelligent-WSN</span> / <span className="text-violet-400 capitalize">{currentPage}</span>
             </div>
             <div className="text-xs text-slate-500 font-medium">
-              Simulation Time: <span className="text-slate-300 font-semibold">{new Date().toLocaleTimeString()}</span>
+              Simulation Time: <span className="text-slate-300 font-semibold">{timeStr}</span>
             </div>
           </div>
 
