@@ -253,6 +253,9 @@ def on_message(client, userdata, msg):
             
             # 2. Log to City-Specific CSV
             save_to_csv(city, flat_data)
+            
+            # 3. Log to Unified Processed Dataset
+            save_to_processed_dataset(city, flat_data)
 
     except Exception as e:
         logger.error(f"Backend failed to process message: {e}")
@@ -283,6 +286,38 @@ def save_to_csv(city, data):
         header=not file_exists, 
         encoding='utf-8'
     )
+
+def save_to_processed_dataset(city, data):
+    """
+    Appends the telemetry record to the unified processed dataset (wsn_dataset.csv),
+    ensuring it is aligned to the unified dataset columns.
+    """
+    processed_dir = os.path.join(os.path.dirname(__file__), "..", "data", "processed")
+    os.makedirs(processed_dir, exist_ok=True)
+    file_path = os.path.join(processed_dir, "wsn_dataset.csv")
+    file_exists = os.path.isfile(file_path)
+    
+    # Copy data dictionary to avoid modifying original
+    dataset_row = data.copy()
+    dataset_row["city"] = city
+    dataset_row["anomaly_flag"] = 0 # Default to 0 (normal) for streaming data
+    
+    dataset_columns = STANDARD_COLUMNS + ["city", "anomaly_flag"]
+    
+    df = pd.DataFrame([dataset_row])
+    for col in dataset_columns:
+        if col not in df.columns:
+            df[col] = None
+    df = df[dataset_columns]
+    
+    df.to_csv(
+        file_path, 
+        mode='a', 
+        index=False, 
+        header=not file_exists, 
+        encoding='utf-8'
+    )
+
 
 def monitor_health():
     """Watchdog logic to check for silent nodes."""
