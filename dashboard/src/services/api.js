@@ -1,10 +1,18 @@
 const API_BASE_URL = "http://127.0.0.1:8000";
 
-async function fetchFromApi(endpoint) {
+async function fetchFromApi(endpoint, options = {}) {
   try {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`);
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, options);
     if (!response.ok) {
-      throw new Error(`API Error: ${response.status} ${response.statusText}`);
+      // Try to parse detailed error message if possible
+      let errorMsg = `API Error: ${response.status} ${response.statusText}`;
+      try {
+        const errJson = await response.json();
+        if (errJson && errJson.detail) {
+          errorMsg = errJson.detail;
+        }
+      } catch (e) {}
+      throw new Error(errorMsg);
     }
     return await response.json();
   } catch (error) {
@@ -27,4 +35,10 @@ export const wsnApi = {
   getNetworkPredictions: (limit = 100) => fetchFromApi(`/api/network-predictions?limit=${limit}`),
   getSystemScore: () => fetchFromApi("/api/system-score"),
   getNetworkHealthHistory: (limit = 150) => fetchFromApi(`/api/analytics/network-health-history?limit=${limit}`),
+  getSettings: () => fetchFromApi("/api/settings"),
+  updateSettings: (payload) => fetchFromApi("/api/settings", {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  }),
 };

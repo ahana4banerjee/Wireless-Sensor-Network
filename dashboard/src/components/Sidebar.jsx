@@ -1,11 +1,12 @@
-import { LayoutDashboard, BarChart3, Binary, Bell, Radio } from 'lucide-react';
+import { LayoutDashboard, BarChart3, Binary, Bell, Radio, Settings } from 'lucide-react';
 
-export default function Sidebar({ currentPage, setCurrentPage, autoRefresh, setAutoRefresh, apiOnline }) {
+export default function Sidebar({ currentPage, setCurrentPage, autoRefresh, setAutoRefresh, apiOnline, pollingInterval = 10 }) {
   const menuItems = [
     { id: 'mission-control', label: 'Mission Control', icon: LayoutDashboard },
     { id: 'network-intelligence', label: 'Network Intelligence', icon: BarChart3 },
     { id: 'predictive-analytics', label: 'Predictive Analytics', icon: Binary },
     { id: 'incident-center', label: 'Incident Center', icon: Bell },
+    { id: 'simulation-settings', label: 'Simulation Settings', icon: Settings },
   ];
 
 
@@ -52,7 +53,7 @@ export default function Sidebar({ currentPage, setCurrentPage, autoRefresh, setA
         <div className="flex items-center justify-between bg-slate-900/50 p-3.5 rounded-xl border border-slate-900">
           <div className="flex flex-col gap-0.5">
             <span className="text-xs font-semibold text-slate-300">Live Polling</span>
-            <span className="text-[10px] text-slate-500">Every 10 seconds</span>
+            <span className="text-[10px] text-slate-500">Every {pollingInterval} seconds</span>
           </div>
           <button
             onClick={() => setAutoRefresh(!autoRefresh)}
