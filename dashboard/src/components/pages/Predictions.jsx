@@ -1,29 +1,39 @@
 import { useEffect, useState } from 'react';
 import { wsnApi } from '../../services/api';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { BrainCircuit, Info, Thermometer, Droplets } from 'lucide-react';
+import { BrainCircuit, Info, Thermometer, Droplets, Battery, Activity, Wifi } from 'lucide-react';
 
 export default function Predictions() {
   const [tempPreds, setTempPreds] = useState([]);
   const [humidityPreds, setHumidityPreds] = useState([]);
+  const [batteryPreds, setBatteryPreds] = useState([]);
+  const [latencyPreds, setLatencyPreds] = useState([]);
+  const [packetLossPreds, setPacketLossPreds] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [chartMode, setChartMode] = useState('temp'); // 'temp' or 'humidity'
+  const [chartMode, setChartMode] = useState('temp'); // 'temp', 'humidity', 'battery', 'latency', 'packetLoss'
 
   useEffect(() => {
     async function fetchPredictions() {
       try {
-        const [tempRes, humidityRes] = await Promise.all([
+        const [tempRes, humidityRes, networkRes] = await Promise.all([
           wsnApi.getTempPredictions(100), // Load last 100 predictions for charts
-          wsnApi.getHumidityPredictions(100)
+          wsnApi.getHumidityPredictions(100),
+          wsnApi.getNetworkPredictions(100)
         ]);
         
         // Sort chronologically ascending for the chart rendering logic
         const sortedTemp = [...tempRes].sort((a, b) => a.unix_ts - b.unix_ts);
         const sortedHum = [...humidityRes].sort((a, b) => a.unix_ts - b.unix_ts);
+        const sortedBat = [...networkRes.battery].sort((a, b) => a.unix_ts - b.unix_ts);
+        const sortedLat = [...networkRes.latency].sort((a, b) => a.unix_ts - b.unix_ts);
+        const sortedLoss = [...networkRes.packet_loss].sort((a, b) => a.unix_ts - b.unix_ts);
         
         setTempPreds(sortedTemp);
         setHumidityPreds(sortedHum);
+        setBatteryPreds(sortedBat);
+        setLatencyPreds(sortedLat);
+        setPacketLossPreds(sortedLoss);
         setError(null);
       } catch (err) {
         console.error("Failed to load predictions:", err);
@@ -80,18 +90,53 @@ export default function Predictions() {
       <div className="bg-rose-500/10 border border-rose-500/20 text-rose-400 p-5 rounded-2xl max-w-xl">
         <h4 className="font-bold text-base m-0 flex items-center gap-2"><Info className="w-5 h-5" /> Predictions Unavailable</h4>
         <p className="text-sm mt-1">{error}</p>
-        <p className="text-xs text-slate-500 mt-3 font-semibold">Make sure to execute the environmental predictor pipeline first.</p>
+        <p className="text-xs text-slate-500 mt-3 font-semibold">Make sure to execute the environmental and network predictor pipelines first.</p>
       </div>
     );
   }
 
-  const activePreds = chartMode === 'temp' ? tempPreds : humidityPreds;
-  const unit = chartMode === 'temp' ? "°C" : "%";
-  const title = chartMode === 'temp' ? "Temperature Forecasting" : "Humidity Forecasting";
+  // Determine active dataset based on mode
+  let activePreds = [];
+  let unit = "";
+  let title = "";
+  let modelType = "";
+  let modelColor = "";
+
+  if (chartMode === 'temp') {
+    activePreds = tempPreds;
+    unit = "°C";
+    title = "Temperature Forecasting";
+    modelType = "Linear Regression";
+    modelColor = "#8b5cf6"; // Violet
+  } else if (chartMode === 'humidity') {
+    activePreds = humidityPreds;
+    unit = "%";
+    title = "Humidity Forecasting";
+    modelType = "Linear Regression";
+    modelColor = "#06b6d4"; // Cyan
+  } else if (chartMode === 'battery') {
+    activePreds = batteryPreds;
+    unit = "%";
+    title = "Battery Decay Prediction";
+    modelType = "Gradient Boosting";
+    modelColor = "#10b981"; // Emerald
+  } else if (chartMode === 'latency') {
+    activePreds = latencyPreds;
+    unit = "ms";
+    title = "Network Latency Prediction";
+    modelType = "Gradient Boosting";
+    modelColor = "#f59e0b"; // Amber
+  } else if (chartMode === 'packetLoss') {
+    activePreds = packetLossPreds;
+    unit = "%";
+    title = "Packet Loss Rate Prediction";
+    modelType = "Gradient Boosting";
+    modelColor = "#f43f5e"; // Rose
+  }
 
   // Calculate prediction error stats
   const calculateStats = (data) => {
-    if (!data || data.length === 0) return { mae: 0, rmse: 0 };
+    if (!data || data.length === 0) return { mae: "0.000", rmse: "0.000" };
     let absErrorSum = 0;
     let sqErrorSum = 0;
     data.forEach(p => {
@@ -105,37 +150,72 @@ export default function Predictions() {
     };
   };
 
-  const tempStats = calculateStats(tempPreds);
-  const humStats = calculateStats(humidityPreds);
+  const activeStats = calculateStats(activePreds);
+  
+  // Custom predicted color to avoid overlap with amber latency line
+  const predictedColor = chartMode === 'latency' ? '#8b5cf6' : '#f59e0b';
 
   return (
     <div className="flex flex-col gap-8 w-full">
       {/* Header title */}
       <div>
         <h2 className="text-2xl font-bold text-white m-0">Model Predictions</h2>
-        <p className="text-slate-400 text-sm mt-1">Comparisons between actual conditions and values forecasted by the Linear Regression models.</p>
+        <p className="text-slate-400 text-sm mt-1">Comparisons between actual sensor metrics and values forecasted by the ML models.</p>
       </div>
 
       {/* Target Predictor Model Switcher & Stats */}
-      <div className="flex flex-col md:flex-row gap-6 items-stretch justify-between">
-        {/* Toggle button Group */}
-        <div className="bg-slate-950 p-1 rounded-2xl border border-slate-900 flex self-start gap-1">
-          <button
-            onClick={() => setChartMode('temp')}
-            className={`flex items-center gap-2.5 px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-200 cursor-pointer ${
-              chartMode === 'temp' ? 'bg-violet-600 text-white' : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            <Thermometer className="w-4 h-4" /> Temperature Predictions
-          </button>
-          <button
-            onClick={() => setChartMode('humidity')}
-            className={`flex items-center gap-2.5 px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-200 cursor-pointer ${
-              chartMode === 'humidity' ? 'bg-violet-600 text-white' : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            <Droplets className="w-4 h-4" /> Humidity Predictions
-          </button>
+      <div className="flex flex-col lg:flex-row gap-6 items-stretch justify-between">
+        {/* Toggle button Groups */}
+        <div className="flex flex-wrap gap-4 items-center">
+          {/* Environmental Model Selector */}
+          <div className="bg-slate-950 p-1 rounded-2xl border border-slate-900/60 flex items-center gap-1.5">
+            <span className="text-[9px] text-slate-500 uppercase font-bold px-3">Env (LR)</span>
+            <button
+              onClick={() => setChartMode('temp')}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 cursor-pointer ${
+                chartMode === 'temp' ? 'bg-violet-600 text-white' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <Thermometer className="w-3.5 h-3.5" /> Temp
+            </button>
+            <button
+              onClick={() => setChartMode('humidity')}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 cursor-pointer ${
+                chartMode === 'humidity' ? 'bg-violet-600 text-white' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <Droplets className="w-3.5 h-3.5" /> Humidity
+            </button>
+          </div>
+
+          {/* Network Model Selector */}
+          <div className="bg-slate-950 p-1 rounded-2xl border border-slate-900/60 flex items-center gap-1.5">
+            <span className="text-[9px] text-slate-500 uppercase font-bold px-3">Network (GB)</span>
+            <button
+              onClick={() => setChartMode('battery')}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 cursor-pointer ${
+                chartMode === 'battery' ? 'bg-emerald-600 text-white' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <Battery className="w-3.5 h-3.5" /> Battery
+            </button>
+            <button
+              onClick={() => setChartMode('latency')}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 cursor-pointer ${
+                chartMode === 'latency' ? 'bg-amber-600 text-white' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <Activity className="w-3.5 h-3.5" /> Latency
+            </button>
+            <button
+              onClick={() => setChartMode('packetLoss')}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 cursor-pointer ${
+                chartMode === 'packetLoss' ? 'bg-rose-600 text-white' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <Wifi className="w-3.5 h-3.5" /> Loss
+            </button>
+          </div>
         </div>
 
         {/* Prediction Accuracy Summary Card */}
@@ -145,19 +225,19 @@ export default function Predictions() {
               <BrainCircuit className="w-5 h-5 text-violet-400" />
             </div>
             <div className="flex flex-col">
-              <span className="text-xs text-slate-400 font-bold uppercase">Linear Regression</span>
+              <span className="text-xs text-slate-400 font-bold uppercase">{modelType}</span>
               <span className="text-sm font-bold text-white">Evaluation Stats</span>
             </div>
           </div>
           <div className="h-8 w-px bg-slate-900" />
           <div className="flex gap-8">
             <div className="flex flex-col">
-              <span className="text-[10px] text-slate-500 font-semibold uppercase">Temperature MAE</span>
-              <span className="text-base font-bold text-violet-400">{tempStats.mae} °C</span>
+              <span className="text-[10px] text-slate-500 font-semibold uppercase">MAE (Error Mean)</span>
+              <span className="text-base font-bold" style={{ color: modelColor }}>{activeStats.mae} {unit}</span>
             </div>
             <div className="flex flex-col">
-              <span className="text-[10px] text-slate-500 font-semibold uppercase">Humidity MAE</span>
-              <span className="text-base font-bold text-cyan-400">{humStats.mae} %</span>
+              <span className="text-[10px] text-slate-500 font-semibold uppercase">RMSE (Std Dev)</span>
+              <span className="text-base font-bold text-slate-300">{activeStats.rmse} {unit}</span>
             </div>
           </div>
         </div>
@@ -189,18 +269,18 @@ export default function Predictions() {
                 />
                 <Legend verticalAlign="top" height={36} iconType="circle" />
                 <Line 
-                  name={`Actual ${chartMode === 'temp' ? 'Temp' : 'Humidity'}`} 
+                  name={`Actual ${chartMode === 'temp' ? 'Temp' : chartMode === 'humidity' ? 'Humidity' : chartMode === 'battery' ? 'Battery' : chartMode === 'latency' ? 'Latency' : 'Packet Loss'}`} 
                   type="monotone" 
                   dataKey="actual" 
-                  stroke={chartMode === 'temp' ? '#8b5cf6' : '#06b6d4'} 
+                  stroke={modelColor} 
                   strokeWidth={2}
                   dot={{ r: 2 }}
                 />
                 <Line 
-                  name={`Predicted ${chartMode === 'temp' ? 'Temp' : 'Humidity'}`} 
+                  name={`Predicted (${modelType})`} 
                   type="monotone" 
                   dataKey="predicted" 
-                  stroke="#f59e0b" 
+                  stroke={predictedColor} 
                   strokeWidth={2}
                   strokeDasharray="4 4"
                   dot={{ r: 2 }}
@@ -237,22 +317,31 @@ export default function Predictions() {
                 let ratingText = "Perfect";
                 let ratingClass = "bg-emerald-500/10 text-emerald-400 border-emerald-500/25";
                 
+                let lowThreshold = 10.0;
+                let modThreshold = 3.0;
                 if (chartMode === 'temp') {
-                  if (absErr > 2.0) {
-                    ratingText = "Low Fit";
-                    ratingClass = "bg-rose-500/10 text-rose-400 border-rose-500/25";
-                  } else if (absErr > 0.8) {
-                    ratingText = "Moderate Fit";
-                    ratingClass = "bg-amber-500/10 text-amber-400 border-amber-500/25";
-                  }
-                } else {
-                  if (absErr > 12.0) {
-                    ratingText = "Low Fit";
-                    ratingClass = "bg-rose-500/10 text-rose-400 border-rose-500/25";
-                  } else if (absErr > 5.0) {
-                    ratingText = "Moderate Fit";
-                    ratingClass = "bg-amber-500/10 text-amber-400 border-amber-500/25";
-                  }
+                  lowThreshold = 2.0;
+                  modThreshold = 0.8;
+                } else if (chartMode === 'humidity') {
+                  lowThreshold = 12.0;
+                  modThreshold = 5.0;
+                } else if (chartMode === 'battery') {
+                  lowThreshold = 5.0;
+                  modThreshold = 1.5;
+                } else if (chartMode === 'latency') {
+                  lowThreshold = 150.0;
+                  modThreshold = 40.0;
+                } else if (chartMode === 'packetLoss') {
+                  lowThreshold = 2.0;
+                  modThreshold = 0.5;
+                }
+                
+                if (absErr > lowThreshold) {
+                  ratingText = "Low Fit";
+                  ratingClass = "bg-rose-500/10 text-rose-400 border-rose-500/25";
+                } else if (absErr > modThreshold) {
+                  ratingText = "Moderate Fit";
+                  ratingClass = "bg-amber-500/10 text-amber-400 border-amber-500/25";
                 }
                 
                 return (
@@ -260,7 +349,7 @@ export default function Predictions() {
                     <td className="py-3 px-4 text-xs text-slate-500 font-medium">{row.timestamp}</td>
                     <td className="py-3 px-4 text-slate-400 font-mono">{row.unix_ts}</td>
                     <td className="py-3 px-4 font-bold text-white">{row.actual.toFixed(2)}</td>
-                    <td className="py-3 px-4 text-violet-400 font-semibold">{row.predicted.toFixed(2)}</td>
+                    <td className="py-3 px-4 font-semibold" style={{ color: modelColor }}>{row.predicted.toFixed(2)}</td>
                     <td className={`py-3 px-4 font-mono font-medium ${errorVal >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
                       {errorVal >= 0 ? '+' : ''}{errorVal.toFixed(4)}
                     </td>

@@ -4,6 +4,7 @@ from src.api.routes.nodes import router as nodes_router
 from src.api.routes.analytics import router as analytics_router
 from src.api.routes.predictions import router as predictions_router
 from src.api.routes.alerts import router as alerts_router
+from src.api.routes.network_intelligence import router as network_intelligence_router
 from src.api.schemas import HealthResponse, RootResponse
 
 app = FastAPI(
@@ -26,6 +27,7 @@ app.include_router(nodes_router, prefix="/api", tags=["Nodes & Telemetry"])
 app.include_router(analytics_router, prefix="/api", tags=["Analytics & Outliers"])
 app.include_router(predictions_router, prefix="/api", tags=["Predictive Models"])
 app.include_router(alerts_router, prefix="/api", tags=["Alerts & Faults"])
+app.include_router(network_intelligence_router, prefix="/api", tags=["Network Intelligence & Predictions"])
 
 @app.get("/", response_model=RootResponse)
 def read_root():

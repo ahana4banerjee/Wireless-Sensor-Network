@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List, Optional, Dict
 
 class HealthResponse(BaseModel):
     status: str
@@ -73,3 +73,28 @@ class AlertResponse(BaseModel):
     message: str
     value: float
     timestamp: str
+
+class NodeHealthDetails(BaseModel):
+    node_id: str
+    battery_level: float
+    signal_strength: float
+    latency_ms: float
+    packet_loss_rate: float
+    timestamp: str
+    battery_score: float
+    signal_score: float
+    latency_score: float
+    packet_loss_score: float
+    network_health_score: float
+    network_health_status: str
+
+class NetworkPredictionsResponse(BaseModel):
+    battery: List[PredictionRecord]
+    latency: List[PredictionRecord]
+    packet_loss: List[PredictionRecord]
+
+class SystemScoreResponse(BaseModel):
+    average_health: float
+    status_counts: Dict[str, int]
+    active_nodes: int
+    system_status: str
