@@ -41,4 +41,18 @@ export const wsnApi = {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
   }),
+  getSystemSummaryText: async () => {
+    const response = await fetch(`${API_BASE_URL}/api/reports/system-summary`);
+    if (!response.ok) throw new Error("Failed to fetch system summary preview.");
+    return await response.text();
+  }
+};
+
+export const EXPORT_URLS = {
+  telemetry: `${API_BASE_URL}/api/export/telemetry`,
+  alerts: `${API_BASE_URL}/api/export/alerts`,
+  prediction: (type) => `${API_BASE_URL}/api/export/predictions?type=${type}`,
+  reportAnomaly: `${API_BASE_URL}/api/export/report/anomaly`,
+  reportHealth: `${API_BASE_URL}/api/export/report/network-health`,
+  systemSummary: `${API_BASE_URL}/api/reports/system-summary`
 };
