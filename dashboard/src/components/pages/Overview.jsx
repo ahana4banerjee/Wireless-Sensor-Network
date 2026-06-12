@@ -11,7 +11,7 @@ import {
   Clock
 } from 'lucide-react';
 
-export default function Overview({ nodesData, liveData, alertsData, analyticsSummary, loading }) {
+export default function Overview({ nodesData, liveData, alertsData, analyticsSummary, loading, systemScore }) {
   const [showBrokerTooltip, setShowBrokerTooltip] = useState(false);
   const [hoveredNode, setHoveredNode] = useState(null);
 
@@ -202,16 +202,20 @@ export default function Overview({ nodesData, liveData, alertsData, analyticsSum
   const avgPacketLoss = analyticsSummary?.average_packet_loss !== undefined ? analyticsSummary.average_packet_loss : 0;
 
   // Calculate Link/Network Health Rating
-  // 100 - avgPacketLoss is a standard operational health metric
-  const networkHealthScore = (100 - avgPacketLoss).toFixed(1);
-  let networkHealthLabel = "OPTIMAL";
+  // Use the systemScore API if available, else fall back to the simple calculation
+  const networkHealthScore = systemScore?.average_health !== undefined
+    ? systemScore.average_health.toFixed(1)
+    : (100 - avgPacketLoss).toFixed(1);
+    
+  let networkHealthLabel = systemScore?.system_status || "OPTIMAL";
   let networkHealthColor = "border-emerald-500/20 bg-emerald-500/10 text-emerald-400";
-  if (avgPacketLoss >= 10.0) {
-    networkHealthLabel = "CRITICAL";
+  
+  if (networkHealthLabel === "FAILING" || networkHealthLabel === "CRITICAL") {
     networkHealthColor = "border-rose-500/20 bg-rose-500/10 text-rose-400";
-  } else if (avgPacketLoss >= 5.0) {
-    networkHealthLabel = "DEGRADED";
+  } else if (networkHealthLabel === "WARNING") {
     networkHealthColor = "border-amber-500/20 bg-amber-500/10 text-amber-400";
+  } else if (networkHealthLabel === "GOOD") {
+    networkHealthColor = "border-cyan-500/20 bg-cyan-500/10 text-cyan-400";
   }
 
   // Slice last 5 alerts
@@ -529,7 +533,7 @@ export default function Overview({ nodesData, liveData, alertsData, analyticsSum
                     {networkHealthLabel}
                   </span>
                 </div>
-                <p className="text-[11px] text-slate-500 mt-1 leading-normal">Operational score evaluated using packet drop statistics.</p>
+                <p className="text-[11px] text-slate-500 mt-1 leading-normal">Operational score evaluated using explainable WSN rules.</p>
               </div>
               <div className="mt-3 border-t border-slate-850 pt-2 flex justify-between text-[10px] font-mono text-slate-400">
                 <span>Loss: {avgPacketLoss.toFixed(1)}%</span>

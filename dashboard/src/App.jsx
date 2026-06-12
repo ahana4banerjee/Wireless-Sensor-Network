@@ -50,6 +50,7 @@ export default function App() {
   const [liveData, setLiveData] = useState([]);
   const [alertsData, setAlertsData] = useState([]);
   const [analyticsSummary, setAnalyticsSummary] = useState(null);
+  const [systemScore, setSystemScore] = useState(null);
   const [apiOnline, setApiOnline] = useState(false);
   const [loading, setLoading] = useState(true);
   const [timeStr, setTimeStr] = useState(new Date().toLocaleTimeString());
@@ -75,11 +76,15 @@ export default function App() {
         setApiOnline(true);
 
         // Fetch WSN states in parallel
-        const [nodesRes, liveRes, alertsRes, summaryRes] = await Promise.all([
+        const [nodesRes, liveRes, alertsRes, summaryRes, scoreRes] = await Promise.all([
           wsnApi.getNodes(),
           wsnApi.getLiveData(),
           wsnApi.getAlerts(false), // Dynamic active alerts only for counting
-          wsnApi.getAnalyticsSummary()
+          wsnApi.getAnalyticsSummary(),
+          wsnApi.getSystemScore().catch(err => {
+            console.warn("Failed to get system score:", err);
+            return null;
+          })
         ]);
 
         if (!isMounted) return;
@@ -87,6 +92,7 @@ export default function App() {
         setLiveData(liveRes);
         setAlertsData(alertsRes);
         setAnalyticsSummary(summaryRes);
+        setSystemScore(scoreRes);
       } catch (error) {
         console.error("Dashboard failed to retrieve live data:", error);
         if (isMounted) setApiOnline(false);
@@ -120,7 +126,7 @@ export default function App() {
         {(() => {
           switch (currentPage) {
             case 'mission-control':
-              return <Overview nodesData={nodesData} liveData={liveData} alertsData={alertsData} analyticsSummary={analyticsSummary} loading={loading} />;
+              return <Overview nodesData={nodesData} liveData={liveData} alertsData={alertsData} analyticsSummary={analyticsSummary} loading={loading} systemScore={systemScore} />;
             case 'network-intelligence':
               return <Analytics />;
             case 'predictive-analytics':
@@ -128,7 +134,7 @@ export default function App() {
             case 'incident-center':
               return <Alerts />;
             default:
-              return <Overview nodesData={nodesData} liveData={liveData} alertsData={alertsData} analyticsSummary={analyticsSummary} loading={loading} />;
+              return <Overview nodesData={nodesData} liveData={liveData} alertsData={alertsData} analyticsSummary={analyticsSummary} loading={loading} systemScore={systemScore} />;
           }
         })()}
       </Suspense>
