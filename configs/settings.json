@@ -6,7 +6,7 @@
     },
     "simulation": {
         "data_interval": 60,
-        "heartbeat_interval": 20,
+        "heartbeat_interval": 10,
         "packet_loss_rate": 0.05,
         "max_delay_ms": 1500,
         "battery_discharge_heartbeat": 0.1,
