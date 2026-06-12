@@ -6,6 +6,7 @@ const Overview = lazy(() => import('./components/pages/Overview'));
 const Analytics = lazy(() => import('./components/pages/Analytics'));
 const Predictions = lazy(() => import('./components/pages/Predictions'));
 const Alerts = lazy(() => import('./components/pages/Alerts'));
+const Settings = lazy(() => import('./components/pages/Settings'));
 
 function PageSkeleton() {
   return (
@@ -44,6 +45,7 @@ function PageSkeleton() {
 export default function App() {
   const [currentPage, setCurrentPage] = useState('mission-control');
   const [autoRefresh, setAutoRefresh] = useState(true);
+  const [pollingInterval, setPollingInterval] = useState(10);
   
   // Data States
   const [nodesData, setNodesData] = useState(null);
@@ -76,13 +78,17 @@ export default function App() {
         setApiOnline(true);
 
         // Fetch WSN states in parallel
-        const [nodesRes, liveRes, alertsRes, summaryRes, scoreRes] = await Promise.all([
+        const [nodesRes, liveRes, alertsRes, summaryRes, scoreRes, settingsRes] = await Promise.all([
           wsnApi.getNodes(),
           wsnApi.getLiveData(),
           wsnApi.getAlerts(false), // Dynamic active alerts only for counting
           wsnApi.getAnalyticsSummary(),
           wsnApi.getSystemScore().catch(err => {
             console.warn("Failed to get system score:", err);
+            return null;
+          }),
+          wsnApi.getSettings().catch(err => {
+            console.warn("Failed to get settings:", err);
             return null;
           })
         ]);
@@ -93,6 +99,9 @@ export default function App() {
         setAlertsData(alertsRes);
         setAnalyticsSummary(summaryRes);
         setSystemScore(scoreRes);
+        if (settingsRes && settingsRes.simulation && settingsRes.simulation.polling_interval) {
+          setPollingInterval(settingsRes.simulation.polling_interval);
+        }
       } catch (error) {
         console.error("Dashboard failed to retrieve live data:", error);
         if (isMounted) setApiOnline(false);
@@ -104,10 +113,10 @@ export default function App() {
     // Initial fetch
     fetchAllData();
 
-    // Poll at 10-second intervals if autoRefresh switch is active
+    // Poll at dynamic intervals if autoRefresh switch is active
     let intervalId = null;
     if (autoRefresh) {
-      intervalId = setInterval(fetchAllData, 10000);
+      intervalId = setInterval(fetchAllData, pollingInterval * 1000);
     }
 
     return () => {
@@ -116,7 +125,7 @@ export default function App() {
         clearInterval(intervalId);
       }
     };
-  }, [autoRefresh]);
+  }, [autoRefresh, pollingInterval]);
 
 
   // Page switcher router mapping
@@ -133,6 +142,8 @@ export default function App() {
               return <Predictions />;
             case 'incident-center':
               return <Alerts />;
+            case 'simulation-settings':
+              return <Settings />;
             default:
               return <Overview nodesData={nodesData} liveData={liveData} alertsData={alertsData} analyticsSummary={analyticsSummary} loading={loading} systemScore={systemScore} />;
           }
@@ -150,6 +161,7 @@ export default function App() {
         autoRefresh={autoRefresh} 
         setAutoRefresh={setAutoRefresh}
         apiOnline={apiOnline}
+        pollingInterval={pollingInterval}
       />
 
       {/* Main Content Area */}
@@ -163,6 +175,7 @@ export default function App() {
                 {currentPage === 'network-intelligence' && 'Network Intelligence'}
                 {currentPage === 'predictive-analytics' && 'Predictive Analytics'}
                 {currentPage === 'incident-center' && 'Incident Center'}
+                {currentPage === 'simulation-settings' && 'Simulation Settings'}
               </span>
             </div>
             <div className="text-xs text-slate-500 font-medium">
