@@ -1,25 +1,27 @@
 import { useEffect, useState } from 'react';
 import { wsnApi } from '../../services/api';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart, Pie } from 'recharts';
-import { Database, AlertOctagon } from 'lucide-react';
-
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, LineChart, Line, Legend } from 'recharts';
+import { Database, AlertOctagon, Network, TrendingUp, Activity } from 'lucide-react';
 
 export default function Analytics() {
   const [summary, setSummary] = useState(null);
   const [anomaliesData, setAnomaliesData] = useState(null);
+  const [healthHistory, setHealthHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     async function fetchAnalytics() {
       try {
-        const [summaryRes, anomaliesRes] = await Promise.all([
+        const [summaryRes, anomaliesRes, healthHistoryRes] = await Promise.all([
           wsnApi.getAnalyticsSummary(),
-          wsnApi.getAnomalies(100) // Fetch up to 100 recent anomalies for charting
+          wsnApi.getAnomalies(100), // Fetch up to 100 recent anomalies for charting
+          wsnApi.getNetworkHealthHistory(250) // Fetch health history points for line chart
         ]);
 
         setSummary(summaryRes);
         setAnomaliesData(anomaliesRes);
+        setHealthHistory(healthHistoryRes);
         setError(null);
       } catch (err) {
         console.error("Failed to load analytics:", err);
@@ -59,6 +61,20 @@ export default function Analytics() {
     }));
   };
 
+  // Group health history observations by timestamp for multi-line Recharts formatting
+  const getTrendData = () => {
+    if (!healthHistory || healthHistory.length === 0) return [];
+    const groups = {};
+    healthHistory.forEach(r => {
+      const ts = r.timestamp;
+      if (!groups[ts]) {
+        groups[ts] = { timestamp: ts, unix_ts: r.unix_ts };
+      }
+      groups[ts][r.node_id] = r.network_health_score;
+    });
+    return Object.values(groups).sort((a, b) => a.unix_ts - b.unix_ts);
+  };
+
   const cityData = getCityAnomalyCounts();
   const conditionData = getConditionAnomalyCounts();
 
@@ -94,6 +110,14 @@ export default function Analytics() {
           ))}
         </div>
 
+        {/* Third chart skeleton */}
+        <div className="glass-card p-6 h-80 flex flex-col gap-4">
+          <div className="h-4 w-40 bg-slate-900 rounded" />
+          <div className="flex-1 bg-slate-950/40 rounded flex items-center justify-center">
+            <div className="w-8 h-8 border-2 border-slate-800/40 border-t-violet-500 rounded-full animate-spin" />
+          </div>
+        </div>
+
         {/* Audit Log Table skeleton */}
         <div className="glass-card p-6 flex flex-col gap-4">
           <div className="h-5 w-56 bg-slate-900 rounded" />
@@ -111,7 +135,7 @@ export default function Analytics() {
   if (error) {
     return (
       <div className="bg-rose-500/10 border border-rose-500/20 text-rose-400 p-5 rounded-2xl max-w-xl">
-        <h4 className="font-bold text-base m-0">Failed to Retrieve Analytics</h4>
+        <h4 className="font-bold text-base m-0 flex items-center gap-2"><AlertOctagon className="w-5 h-5" /> Failed to Retrieve Analytics</h4>
         <p className="text-sm mt-1">{error}</p>
       </div>
     );
@@ -121,8 +145,8 @@ export default function Analytics() {
     <div className="flex flex-col gap-8 w-full">
       {/* Header title */}
       <div>
-        <h2 className="text-2xl font-bold text-white m-0">Historical Analytics</h2>
-        <p className="text-slate-400 text-sm mt-1">Exploratory analysis and statistical diagnostics computed over the integrated master dataset.</p>
+        <h2 className="text-2xl font-bold text-white m-0">Network Intelligence</h2>
+        <p className="text-slate-400 text-sm mt-1">Sensing analytics, anomaly audit feeds, and chronological Network Health Index (NHI) metrics.</p>
       </div>
 
       {/* Dataset Summary Metrics */}
@@ -143,9 +167,11 @@ export default function Analytics() {
             </span>
           </div>
           <div className="glass-card p-5 flex flex-col gap-2">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Average Temperature</span>
-            <span className="text-2xl font-extrabold text-white">{summary.average_temperature} °C</span>
-            <span className="text-[10px] text-slate-500 mt-1">Telemetry Range Average</span>
+            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">WSN Network Health</span>
+            <span className="text-2xl font-extrabold text-emerald-400">{summary.average_network_health}%</span>
+            <span className="text-[10px] text-emerald-500 flex items-center gap-1 mt-1 font-semibold">
+              <Activity className="w-3.5 h-3.5" /> Overall Health Index
+            </span>
           </div>
           <div className="glass-card p-5 flex flex-col gap-2">
             <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Average Latency</span>
@@ -160,7 +186,7 @@ export default function Analytics() {
         </div>
       )}
 
-      {/* Visual Analytics Charts */}
+      {/* Visual Analytics Charts (Anomalies) */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Bar Chart: Anomalies per Node */}
         <div className="glass-card p-6 flex flex-col gap-4">
@@ -231,6 +257,50 @@ export default function Analytics() {
               <div className="flex items-center justify-center w-full h-full text-slate-500 text-sm">No recent anomaly weather records.</div>
             )}
           </div>
+        </div>
+      </div>
+
+      {/* Network Health Index (NHI) Trend Chart */}
+      <div className="glass-card p-6 flex flex-col gap-4">
+        <div className="flex justify-between items-center border-b border-slate-800/80 pb-3">
+          <div>
+            <h3 className="text-base font-bold text-slate-200 m-0 flex items-center gap-2">
+              <Network className="w-4 h-4 text-emerald-400" /> Network Health Index (NHI) Historical Trend
+            </h3>
+            <p className="text-slate-400 text-xs mt-1">Explainable system health tracking calculated per observation node registry.</p>
+          </div>
+          <span className="text-[10px] font-mono text-slate-500">Master Dataset History (Clamped [0, 100])</span>
+        </div>
+        
+        <div className="h-80 w-full">
+          {healthHistory.length > 0 ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={getTrendData()} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                <XAxis 
+                  dataKey="timestamp" 
+                  stroke="#64748b" 
+                  fontSize={10} 
+                  tickFormatter={(t) => t ? t.split(' ')[3] : ''} // Only show the time component
+                  tickLine={false}
+                />
+                <YAxis stroke="#64748b" fontSize={11} tickLine={false} domain={[0, 105]} label={{ value: "Health Index Score (%)", angle: -90, position: 'insideLeft', fill: '#64748b' }} />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '8px', color: '#f3f4f6' }}
+                  labelStyle={{ color: '#94a3b8', fontWeight: 'bold' }}
+                />
+                <Legend verticalAlign="top" height={36} iconType="circle" />
+                
+                <Line name="Delhi" type="monotone" dataKey="Delhi" stroke="#3b82f6" strokeWidth={2} dot={false} connectNulls />
+                <Line name="Hyderabad" type="monotone" dataKey="Hyderabad" stroke="#f59e0b" strokeWidth={2} dot={false} connectNulls />
+                <Line name="Mumbai" type="monotone" dataKey="Mumbai" stroke="#10b981" strokeWidth={2} dot={false} connectNulls />
+                <Line name="Bangalore" type="monotone" dataKey="Bangalore" stroke="#a78bfa" strokeWidth={2} dot={false} connectNulls />
+                <Line name="Secunderabad" type="monotone" dataKey="Secunderabad" stroke="#f43f5e" strokeWidth={2} dot={false} connectNulls />
+              </LineChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex items-center justify-center h-full text-slate-500">No historical health records.</div>
+          )}
         </div>
       </div>
 
