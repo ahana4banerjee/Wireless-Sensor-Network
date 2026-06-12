@@ -4,7 +4,7 @@
 
 1. DATASET DIMENSIONS
 ---------------------
-Total Observations (Rows): 2376
+Total Observations (Rows): 2405
 Total Attributes (Columns): 17
 
 2. DATA TYPES & MISSING VALUES
@@ -32,53 +32,53 @@ Duplicate Rows: 0
 3. FEATURE RANGES & STATISTICS
 ------------------------------
 Feature: temp
-  Range: [27.05 to 39.38]
-  Mean : 34.25 | Std: 3.01
-  25%  : 32.87 | 50% (Median): 33.99 | 75%: 36.79
+  Range: [22.07 to 40.33]
+  Mean : 34.20 | Std: 3.08
+  25%  : 32.82 | 50% (Median): 33.99 | 75%: 36.79
 
 Feature: humidity
-  Range: [22.00 to 74.00]
-  Mean : 42.36 | Std: 14.25
-  25%  : 32.00 | 50% (Median): 37.00 | 75%: 55.00
+  Range: [11.00 to 90.00]
+  Mean : 42.56 | Std: 14.49
+  25%  : 32.00 | 50% (Median): 37.00 | 75%: 56.00
 
 Feature: pressure
   Range: [995.00 to 1014.00]
-  Mean : 1002.54 | Std: 3.39
+  Mean : 1002.59 | Std: 3.44
   25%  : 1000.00 | 50% (Median): 1003.00 | 75%: 1005.00
 
 Feature: battery_level
   Range: [0.06 to 100.00]
-  Mean : 57.64 | Std: 28.11
-  25%  : 33.81 | 50% (Median): 60.46 | 75%: 82.56
+  Mean : 58.13 | Std: 28.29
+  25%  : 34.01 | 50% (Median): 61.07 | 75%: 83.47
 
 Feature: signal_strength
   Range: [-81.87 to -43.86]
-  Mean : -65.03 | Std: 7.81
-  25%  : -71.61 | 50% (Median): -65.06 | 75%: -58.60
+  Mean : -64.97 | Std: 7.79
+  25%  : -71.54 | 50% (Median): -64.92 | 75%: -58.56
 
 Feature: latency_ms
-  Range: [49.03 to 1474.90]
-  Mean : 458.58 | Std: 271.96
-  25%  : 243.89 | 50% (Median): 444.40 | 75%: 635.62
+  Range: [9.24 to 1474.90]
+  Mean : 461.13 | Std: 275.76
+  25%  : 243.98 | 50% (Median): 445.05 | 75%: 638.77
 
 Feature: packet_loss_rate
   Range: [0.00 to 10.91]
-  Mean : 4.42 | Std: 1.08
-  25%  : 3.80 | 50% (Median): 4.56 | 75%: 5.16
+  Mean : 4.37 | Std: 1.18
+  25%  : 3.75 | 50% (Median): 4.53 | 75%: 5.16
 
 4. ANOMALY DETECTION METRICS
 ----------------------------
 Anomalous Observations Flagged : 119
-Percentage of Dataset anomalous : 5.01%
+Percentage of Dataset anomalous : 4.95%
 
 5. KEY OBSERVATIONS & FINDINGS
 ------------------------------
 - Battery Life: 0 observations are logged with completely depleted battery (0.0%).
 - Correlations Spotted:
-  * Moderate/strong negative correlation between temp and humidity (-0.68)
-  * Moderate/strong negative correlation between temp and pressure (-0.31)
-  * Moderate/strong positive correlation between humidity and pressure (0.36)
-  * Moderate/strong negative correlation between humidity and signal_strength (-0.46)
-  * Moderate/strong negative correlation between pressure and signal_strength (-0.50)
+  * Moderate/strong negative correlation between temp and humidity (-0.69)
+  * Moderate/strong negative correlation between temp and pressure (-0.35)
+  * Moderate/strong positive correlation between humidity and pressure (0.39)
+  * Moderate/strong negative correlation between humidity and signal_strength (-0.44)
+  * Moderate/strong negative correlation between pressure and signal_strength (-0.48)
 
 Report completed successfully. Ready for predictive modeling validation.
