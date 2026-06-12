@@ -262,8 +262,7 @@ def run_gradient_boosting_predictors():
     models_config = [
         ("Battery", features_A, "battery_level", "gb_battery_model.pkl", "gb_battery_predictions.csv", "gb_battery_prediction.png"),
         ("Latency", features_B, "latency_ms", "gb_latency_model.pkl", "gb_latency_predictions.csv", "gb_latency_prediction.png"),
-        ("Packet Loss", features_C, "packet_loss_rate", "gb_packet_loss_model.pkl", "gb_packet_loss_predictions.csv", "gb_packet_loss_prediction.png"),
-        ("Health Score", features_D, "network_health_score", "gb_health_model.pkl", "gb_health_predictions.csv", "gb_health_prediction.png")
+        ("Packet Loss", features_C, "packet_loss_rate", "gb_packet_loss_model.pkl", "gb_packet_loss_predictions.csv", "gb_packet_loss_prediction.png")
     ]
     
     gb_metrics = {}
@@ -346,7 +345,7 @@ def run_gradient_boosting_predictors():
         f.write("-------------------------------\n")
         
         # We display each metric side-by-side for comparison
-        for model_key in ["Battery", "Latency", "Packet Loss", "Health Score"]:
+        for model_key in ["Battery", "Latency", "Packet Loss"]:
             lr_m = lr_metrics[model_key]
             gb_m = gb_metrics[model_key]
             
@@ -367,7 +366,7 @@ def run_gradient_boosting_predictors():
             
         f.write("3. FEATURE IMPORTANCE RANKINGS (GRADIENT BOOSTING)\n")
         f.write("--------------------------------------------------\n")
-        for model_key in ["Battery", "Latency", "Packet Loss", "Health Score"]:
+        for model_key in ["Battery", "Latency", "Packet Loss"]:
             f.write(f"Model: {model_key}\n")
             top_feats = feature_importances_dict[model_key][:5]
             for feat_name, imp_score in top_feats:
@@ -378,17 +377,18 @@ def run_gradient_boosting_predictors():
         f.write("-------------------------\n")
         f.write("  * Battery Level Model: Gradient Boosting outperforms Linear Regression dramatically. ")
         f.write("By using lagged battery stats, battery_change_rate, and elapsed_runtime, the model captures ")
-        f.write("the exact cyclic discharging pattern of the simulated nodes.\n")
+        f.write("the exact cyclic discharging pattern of the simulated nodes.\n\n")
         
         f.write("  * Latency Model: Previously, Linear Regression achieved negative R² scores due to heavy non-linear jitter. ")
         f.write("The new Gradient Boosting model uses rolling mean metrics and previous latency states to resolve ")
-        f.write("realistic latency jumps.\n")
+        f.write("realistic latency jumps.\n\n")
         
         f.write("  * Packet Loss Model: Gradient Boosting utilizes signal strength, previous loss rates, and rolling statistics ")
-        f.write("to forecast transmission failures accurately.\n")
+        f.write("to forecast transmission failures accurately.\n\n")
         
-        f.write("  * Health Score Model: Model D, built directly to predict the overall network health score using lagged inputs, ")
-        f.write("yields highly reliable forecasts, indicating high readiness for proactive maintenance scheduling.\n")
+        f.write("  * Network Health Index: Note that the ML-based Health Score prediction has been replaced by ")
+        f.write("a deterministic, engineering-based Network Health Index (NHI). Please refer to the NHI ")
+        f.write("reports under reports/network_health_report.txt for exact specifications and formulas.\n")
         
     print("Version 2 training and evaluation pipeline completed successfully!")
 

@@ -43,17 +43,6 @@ Chronological Test Set (20%):  476
     - R²   : 0.7519
     - DELTA: R² change of +0.6652 | MAE reduced by 56.91%
 
---- MODEL: Health Score Prediction ---
-  * Linear Regression (V1 Baseline):
-    - MAE  : 8.7866
-    - RMSE : 10.4050
-    - R²   : 0.1016
-  * Gradient Boosting (V2 Engineered):
-    - MAE  : 8.7267
-    - RMSE : 12.7044
-    - R²   : -0.2376
-    - DELTA: R² change of -0.3392 | MAE reduced by 0.68%
-
 3. FEATURE IMPORTANCE RANKINGS (GRADIENT BOOSTING)
 --------------------------------------------------
 Model: Battery
@@ -77,16 +66,12 @@ Model: Packet Loss
   * prev_rolling_std_packet_loss  : 0.0092
   * sequence_progress             : 0.0058
 
-Model: Health Score
-  * previous_battery_level        : 0.7485
-  * prev_rolling_mean_health      : 0.0970
-  * previous_signal_strength      : 0.0310
-  * elapsed_runtime               : 0.0240
-  * prev_rolling_mean_battery     : 0.0195
-
 4. CONCLUSIONS & ANALYSIS
 -------------------------
   * Battery Level Model: Gradient Boosting outperforms Linear Regression dramatically. By using lagged battery stats, battery_change_rate, and elapsed_runtime, the model captures the exact cyclic discharging pattern of the simulated nodes.
+
   * Latency Model: Previously, Linear Regression achieved negative R² scores due to heavy non-linear jitter. The new Gradient Boosting model uses rolling mean metrics and previous latency states to resolve realistic latency jumps.
+
   * Packet Loss Model: Gradient Boosting utilizes signal strength, previous loss rates, and rolling statistics to forecast transmission failures accurately.
-  * Health Score Model: Model D, built directly to predict the overall network health score using lagged inputs, yields highly reliable forecasts, indicating high readiness for proactive maintenance scheduling.
+
+  * Network Health Index: Note that the ML-based Health Score prediction has been replaced by a deterministic, engineering-based Network Health Index (NHI). Please refer to the NHI reports under reports/network_health_report.txt for exact specifications and formulas.

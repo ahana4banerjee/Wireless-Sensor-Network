@@ -1,0 +1,72 @@
+====================================================================
+          WSN DETERMINISTIC NETWORK HEALTH INDEX (NHI) REPORT       
+====================================================================
+
+1. DEFINITIONS AND FORMULATION
+------------------------------
+The Network Health Index (NHI) is an explainable engineering metric scoring WSN operational
+performance between 0 (complete failure) and 100 (optimal health). It is computed
+by normalizing four distinct metrics and applying operational weights:
+
+  * Battery Score (35% Weight):
+    - Formula: battery_score = battery_level
+    - Range: 0 to 100%
+
+  * Signal Score (25% Weight):
+    - Formula: signal_score = (signal_strength + 90.0) / 40.0 * 100.0
+    - Range: RSSI >= -50 dBm maps to 100; RSSI <= -90 dBm maps to 0
+
+  * Latency Score (20% Weight):
+    - Formula: latency_score = (1500.0 - latency_ms) / 1400.0 * 100.0
+    - Range: latency <= 100 ms maps to 100; latency >= 1500 ms maps to 0
+
+  * Packet Loss Score (20% Weight):
+    - Formula: packet_loss_score = (10.0 - packet_loss_rate) * 10.0
+    - Range: packet_loss_rate = 0% maps to 100; packet_loss_rate >= 10% maps to 0
+
+  * Combined Weighted Equation:
+    nhi_score = 0.35*battery_score + 0.25*signal_score + 0.20*latency_score + 0.20*packet_loss_score
+    (All subscores and final NHI score are clamped strictly to [0.0, 100.0])
+
+2. HEALTH STATUS CLASSIFICATIONS
+--------------------------------
+The final NHI score classifies nodes into five distinct categories for maintenance dashboard feeds:
+  * 90.0 - 100.0 ➔ EXCELLENT
+  * 75.0 - 89.9  ➔ GOOD
+  * 60.0 - 74.9  ➔ WARNING
+  * 40.0 - 59.9  ➔ CRITICAL
+  * 0.0  - 39.9  ➔ FAILING
+
+3. DATASET STATISTICS SUMMARY
+-----------------------------
+Total rows calculated: 2405
+  * Average WSN Health Index : 62.05
+  * Minimum Logged Health    : 24.70
+  * Maximum Logged Health    : 96.18
+
+Distribution of statuses across all nodes observations:
+  * WARNING        : 1004  records (41.75%)
+  * CRITICAL       : 956   records (39.75%)
+  * GOOD           : 351   records (14.59%)
+  * FAILING        : 78    records (3.24%)
+  * EXCELLENT      : 16    records (0.67%)
+
+4. EXEMPLAR CALCULATIONS
+------------------------
+Example Row 1 (City: Hyderabad):
+  - Input Attributes: Battery=100.0%, RSSI=-63.64dBm, Latency=96.33ms, Loss=0.0%
+  - Subscores       : Battery_Score=100.00, Signal_Score=65.90, Latency_Score=100.00, Loss_Score=100.00
+  - Weighted Score  : 91.47
+  - Status Category : EXCELLENT
+
+Example Row 2 (City: Delhi):
+  - Input Attributes: Battery=100.0%, RSSI=-58.06dBm, Latency=163.7ms, Loss=0.0%
+  - Subscores       : Battery_Score=100.00, Signal_Score=79.85, Latency_Score=95.45, Loss_Score=100.00
+  - Weighted Score  : 94.05
+  - Status Category : EXCELLENT
+
+5. CONCLUSION
+-------------
+This deterministic engineering NHI replacement provides clear, explainable, and reproducible tracking
+of sensor nodes compared to previous ML approximations. The generated values are persisted in the
+database logs and fully integrated with dashboard analytics metrics.
