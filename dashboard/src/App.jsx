@@ -7,6 +7,7 @@ const Analytics = lazy(() => import('./components/pages/Analytics'));
 const Predictions = lazy(() => import('./components/pages/Predictions'));
 const Alerts = lazy(() => import('./components/pages/Alerts'));
 const Settings = lazy(() => import('./components/pages/Settings'));
+const ExportCenter = lazy(() => import('./components/pages/ExportCenter'));
 
 function PageSkeleton() {
   return (
@@ -144,6 +145,8 @@ export default function App() {
               return <Alerts />;
             case 'simulation-settings':
               return <Settings />;
+            case 'export-center':
+              return <ExportCenter />;
             default:
               return <Overview nodesData={nodesData} liveData={liveData} alertsData={alertsData} analyticsSummary={analyticsSummary} loading={loading} systemScore={systemScore} />;
           }
@@ -176,6 +179,7 @@ export default function App() {
                 {currentPage === 'predictive-analytics' && 'Predictive Analytics'}
                 {currentPage === 'incident-center' && 'Incident Center'}
                 {currentPage === 'simulation-settings' && 'Simulation Settings'}
+                {currentPage === 'export-center' && 'Export Center'}
               </span>
             </div>
             <div className="text-xs text-slate-500 font-medium">
