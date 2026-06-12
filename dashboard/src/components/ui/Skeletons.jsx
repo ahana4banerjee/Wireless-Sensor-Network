@@ -93,3 +93,29 @@ export function ErrorCard({ title = "Data Stream Offline", message = "API reques
     </div>
   );
 }
+
+export function SettingsSkeleton() {
+  return (
+    <div className="glass-card p-6 md:p-8 max-w-4xl flex flex-col gap-8 animate-pulse bg-slate-900/10 border-slate-900">
+      {[...Array(3)].map((_, sectionIdx) => (
+        <div key={sectionIdx} className="flex flex-col gap-4">
+          <div className="h-4 w-48 bg-slate-900/60 rounded" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {[...Array(sectionIdx === 2 ? 3 : 2)].map((_, inputIdx) => (
+              <div key={inputIdx} className="flex flex-col gap-2">
+                <div className="h-3 w-32 bg-slate-900/60 rounded" />
+                <div className="h-10 bg-slate-950/40 border border-slate-900/40 rounded-xl" />
+                <div className="h-2 w-48 bg-slate-900/60 rounded mt-1" />
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+      <div className="flex items-center gap-4 mt-4 border-t border-slate-900/40 pt-6">
+        <div className="h-10 w-40 bg-slate-900/60 rounded-xl" />
+        <div className="h-10 w-32 bg-slate-900/60 rounded-xl" />
+      </div>
+    </div>
+  );
+}
+

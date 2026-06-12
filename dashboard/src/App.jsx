@@ -47,16 +47,9 @@ export default function App() {
   const [currentPage, setCurrentPage] = useState('mission-control');
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [pollingInterval, setPollingInterval] = useState(10);
-  
-  // Data States
-  const [nodesData, setNodesData] = useState(null);
-  const [liveData, setLiveData] = useState([]);
-  const [alertsData, setAlertsData] = useState([]);
-  const [analyticsSummary, setAnalyticsSummary] = useState(null);
-  const [systemScore, setSystemScore] = useState(null);
   const [apiOnline, setApiOnline] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [timeStr, setTimeStr] = useState(new Date().toLocaleTimeString());
+  const [visitedPages, setVisitedPages] = useState(['mission-control']);
 
   // Clock interval updates every second
   useEffect(() => {
@@ -66,91 +59,96 @@ export default function App() {
     return () => clearInterval(timer);
   }, []);
 
+  // Track visited pages to cache them
+  useEffect(() => {
+    if (!visitedPages.includes(currentPage)) {
+      setVisitedPages(prev => [...prev, currentPage]);
+    }
+  }, [currentPage, visitedPages]);
 
-  // Core API Fetch and polling lifecycle
+  // Core API Fetch and polling lifecycle (lightweight health & settings sync only)
   useEffect(() => {
     let isMounted = true;
 
-    const fetchAllData = async () => {
+    const performHealthAndSettingsCheck = async () => {
       try {
-        // Health check first
         await wsnApi.getHealth();
         if (!isMounted) return;
         setApiOnline(true);
 
-        // Fetch WSN states in parallel
-        const [nodesRes, liveRes, alertsRes, summaryRes, scoreRes, settingsRes] = await Promise.all([
-          wsnApi.getNodes(),
-          wsnApi.getLiveData(),
-          wsnApi.getAlerts(false), // Dynamic active alerts only for counting
-          wsnApi.getAnalyticsSummary(),
-          wsnApi.getSystemScore().catch(err => {
-            console.warn("Failed to get system score:", err);
-            return null;
-          }),
-          wsnApi.getSettings().catch(err => {
-            console.warn("Failed to get settings:", err);
-            return null;
-          })
-        ]);
+        const settingsRes = await wsnApi.getSettings().catch(err => {
+          console.warn("Failed to get settings in health check:", err);
+          return null;
+        });
 
         if (!isMounted) return;
-        setNodesData(nodesRes);
-        setLiveData(liveRes);
-        setAlertsData(alertsRes);
-        setAnalyticsSummary(summaryRes);
-        setSystemScore(scoreRes);
         if (settingsRes && settingsRes.simulation && settingsRes.simulation.polling_interval) {
           setPollingInterval(settingsRes.simulation.polling_interval);
         }
       } catch (error) {
-        console.error("Dashboard failed to retrieve live data:", error);
+        console.error("Dashboard failed to communicate with backend:", error);
         if (isMounted) setApiOnline(false);
-      } finally {
-        if (isMounted) setLoading(false);
       }
     };
 
-    // Initial fetch
-    fetchAllData();
+    // Initial check
+    performHealthAndSettingsCheck();
 
-    // Poll at dynamic intervals if autoRefresh switch is active
-    let intervalId = null;
-    if (autoRefresh) {
-      intervalId = setInterval(fetchAllData, pollingInterval * 1000);
-    }
+    // Poll at dynamic intervals
+    let intervalId = setInterval(performHealthAndSettingsCheck, 10000);
 
     return () => {
       isMounted = false;
-      if (intervalId) {
-        clearInterval(intervalId);
-      }
+      clearInterval(intervalId);
     };
-  }, [autoRefresh, pollingInterval]);
+  }, []);
 
-
-  // Page switcher router mapping
+  // Page switcher router mapping using visbility caching
   const renderPage = () => {
     return (
       <Suspense fallback={<PageSkeleton />}>
-        {(() => {
-          switch (currentPage) {
-            case 'mission-control':
-              return <Overview nodesData={nodesData} liveData={liveData} alertsData={alertsData} analyticsSummary={analyticsSummary} loading={loading} systemScore={systemScore} />;
-            case 'network-intelligence':
-              return <Analytics />;
-            case 'predictive-analytics':
-              return <Predictions />;
-            case 'incident-center':
-              return <Alerts />;
-            case 'simulation-settings':
-              return <Settings />;
-            case 'export-center':
-              return <ExportCenter />;
-            default:
-              return <Overview nodesData={nodesData} liveData={liveData} alertsData={alertsData} analyticsSummary={analyticsSummary} loading={loading} systemScore={systemScore} />;
-          }
-        })()}
+        <div style={{ display: currentPage === 'mission-control' ? 'block' : 'none', width: '100%' }}>
+          {visitedPages.includes('mission-control') && (
+            <div className="fade-in">
+              <Overview pollingInterval={pollingInterval} autoRefresh={autoRefresh} />
+            </div>
+          )}
+        </div>
+        <div style={{ display: currentPage === 'network-intelligence' ? 'block' : 'none', width: '100%' }}>
+          {visitedPages.includes('network-intelligence') && (
+            <div className="fade-in">
+              <Analytics />
+            </div>
+          )}
+        </div>
+        <div style={{ display: currentPage === 'predictive-analytics' ? 'block' : 'none', width: '100%' }}>
+          {visitedPages.includes('predictive-analytics') && (
+            <div className="fade-in">
+              <Predictions />
+            </div>
+          )}
+        </div>
+        <div style={{ display: currentPage === 'incident-center' ? 'block' : 'none', width: '100%' }}>
+          {visitedPages.includes('incident-center') && (
+            <div className="fade-in">
+              <Alerts />
+            </div>
+          )}
+        </div>
+        <div style={{ display: currentPage === 'simulation-settings' ? 'block' : 'none', width: '100%' }}>
+          {visitedPages.includes('simulation-settings') && (
+            <div className="fade-in">
+              <Settings />
+            </div>
+          )}
+        </div>
+        <div style={{ display: currentPage === 'export-center' ? 'block' : 'none', width: '100%' }}>
+          {visitedPages.includes('export-center') && (
+            <div className="fade-in">
+              <ExportCenter />
+            </div>
+          )}
+        </div>
       </Suspense>
     );
   };
@@ -196,3 +194,4 @@ export default function App() {
     </div>
   );
 }
+

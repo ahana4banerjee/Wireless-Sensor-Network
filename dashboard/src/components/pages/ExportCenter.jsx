@@ -86,11 +86,16 @@ export default function ExportCenter() {
                   className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-xs font-bold bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white transition-all cursor-pointer"
                 >
                   {downloading === 'telemetry' ? (
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Exporting...</span>
+                    </>
                   ) : (
-                    <Download className="w-3.5 h-3.5" />
+                    <>
+                      <Download className="w-3.5 h-3.5" />
+                      <span>Export CSV Dataset</span>
+                    </>
                   )}
-                  Export CSV Dataset
                 </button>
               </div>
 
@@ -110,11 +115,16 @@ export default function ExportCenter() {
                   className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-xs font-bold bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white transition-all cursor-pointer"
                 >
                   {downloading === 'alerts' ? (
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Exporting...</span>
+                    </>
                   ) : (
-                    <Download className="w-3.5 h-3.5" />
+                    <>
+                      <Download className="w-3.5 h-3.5" />
+                      <span>Export CSV Log</span>
+                    </>
                   )}
-                  Export CSV Log
                 </button>
               </div>
             </div>
@@ -151,14 +161,20 @@ export default function ExportCenter() {
               <button
                 onClick={() => handleDownload(EXPORT_URLS.prediction(predictionType), 'prediction')}
                 disabled={downloading !== null}
+                style={{ minWidth: '195px' }}
                 className="flex items-center justify-center gap-2 py-3 px-6 rounded-xl text-xs font-bold bg-cyan-600 hover:bg-cyan-700 disabled:opacity-50 text-white transition-all cursor-pointer shrink-0"
               >
                 {downloading === 'prediction' ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Downloading...</span>
+                  </>
                 ) : (
-                  <Download className="w-3.5 h-3.5" />
+                  <>
+                    <Download className="w-3.5 h-3.5" />
+                    <span>Download Predictions CSV</span>
+                  </>
                 )}
-                Download Predictions CSV
               </button>
             </div>
           </div>
@@ -181,14 +197,20 @@ export default function ExportCenter() {
                 <button
                   onClick={() => handleDownload(EXPORT_URLS.reportAnomaly, 'anomaly_report')}
                   disabled={downloading !== null}
-                  className="flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-semibold border border-slate-800 text-slate-300 hover:text-white hover:border-slate-600 hover:bg-slate-950/20 transition-all cursor-pointer mt-2"
+                  style={{ minWidth: '160px' }}
+                  className="flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-semibold border border-slate-800 text-slate-300 hover:text-white hover:border-slate-600 hover:bg-slate-950/20 transition-all cursor-pointer mt-2 w-full"
                 >
                   {downloading === 'anomaly_report' ? (
-                    <Loader2 className="w-3 h-3 animate-spin" />
+                    <>
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                      <span>Downloading...</span>
+                    </>
                   ) : (
-                    <Download className="w-3 h-3" />
+                    <>
+                      <Download className="w-3 h-3" />
+                      <span>Download Text Report</span>
+                    </>
                   )}
-                  Download Text Report
                 </button>
               </div>
 
@@ -203,14 +225,20 @@ export default function ExportCenter() {
                 <button
                   onClick={() => handleDownload(EXPORT_URLS.reportHealth, 'health_report')}
                   disabled={downloading !== null}
-                  className="flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-semibold border border-slate-800 text-slate-300 hover:text-white hover:border-slate-600 hover:bg-slate-950/20 transition-all cursor-pointer mt-2"
+                  style={{ minWidth: '160px' }}
+                  className="flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-semibold border border-slate-800 text-slate-300 hover:text-white hover:border-slate-600 hover:bg-slate-950/20 transition-all cursor-pointer mt-2 w-full"
                 >
                   {downloading === 'health_report' ? (
-                    <Loader2 className="w-3 h-3 animate-spin" />
+                    <>
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                      <span>Downloading...</span>
+                    </>
                   ) : (
-                    <Download className="w-3 h-3" />
+                    <>
+                      <Download className="w-3 h-3" />
+                      <span>Download Text Report</span>
+                    </>
                   )}
-                  Download Text Report
                 </button>
               </div>
             </div>
@@ -231,14 +259,15 @@ export default function ExportCenter() {
               Generates a real-time system metrics summary of the entire grid, incorporating current health scores, active warnings, and dataset averages.
             </p>
 
-            <div className="flex-1 min-h-[200px] max-h-[300px] overflow-y-auto bg-slate-950 border border-slate-900/60 rounded-xl p-4 font-mono text-[10px] leading-relaxed text-slate-400 select-none no-print">
+            <div className="flex-1 min-h-[200px] max-h-[300px] overflow-y-auto bg-slate-950 border border-slate-900/60 rounded-xl p-4 font-mono text-[10px] leading-relaxed text-slate-400 select-none no-print flex items-center justify-center">
               {loadingPreview ? (
-                <div className="flex items-center justify-center h-48 w-full gap-2">
-                  <Loader2 className="w-4 h-4 text-violet-500 animate-spin" />
-                  <span>Compiling dynamic preview...</span>
+                <div className="flex flex-col gap-2 animate-pulse w-full">
+                  {[...Array(8)].map((_, i) => (
+                    <div key={i} className="h-2.5 bg-slate-900/40 rounded w-full" style={{ width: `${90 - (i % 3) * 10}%` }} />
+                  ))}
                 </div>
               ) : (
-                <pre className="whitespace-pre-wrap font-mono m-0 text-left">{reportPreview}</pre>
+                <pre className="whitespace-pre-wrap font-mono m-0 text-left w-full">{reportPreview}</pre>
               )}
             </div>
 
@@ -248,11 +277,16 @@ export default function ExportCenter() {
               className="flex items-center justify-center gap-2 w-full py-3 rounded-xl text-xs font-bold bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white transition-all cursor-pointer"
             >
               {downloading === 'system_summary' ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <span>Downloading...</span>
+                </>
               ) : (
-                <Download className="w-3.5 h-3.5" />
+                <>
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Download Full Report</span>
+                </>
               )}
-              Download Full Report
             </button>
           </div>
 

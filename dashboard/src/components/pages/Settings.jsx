@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { wsnApi } from '../../services/api';
-import { Sliders, Save, RotateCcw, AlertCircle, CheckCircle, Info } from 'lucide-react';
+import { Sliders, Save, RotateCcw, AlertCircle, CheckCircle, Info, Loader2 } from 'lucide-react';
+import { SettingsSkeleton } from '../ui/Skeletons';
 
 const DEFAULTS = {
   data_interval: 60,
@@ -107,17 +108,16 @@ export default function Settings() {
 
   if (loading) {
     return (
-      <div className="flex flex-col gap-8 w-full animate-pulse">
+      <div className="flex flex-col gap-8 w-full text-slate-200">
         <div>
-          <div className="h-7 w-48 bg-slate-900 rounded mb-2" />
-          <div className="h-4 w-96 bg-slate-900 rounded" />
+          <h2 className="text-2xl font-bold text-white m-0 font-sans">Simulation Settings</h2>
+          <p className="text-slate-400 text-sm mt-1 font-sans">Adjust live virtual sensor nodes execution frequencies, network packet losses, battery discharge rates, and dashboard polling times.</p>
         </div>
-        <div className="glass-card p-6 h-96 flex items-center justify-center">
-          <div className="w-8 h-8 border-2 border-slate-800/40 border-t-violet-500 rounded-full animate-spin" />
-        </div>
+        <SettingsSkeleton />
       </div>
     );
   }
+
 
   return (
     <div className="flex flex-col gap-8 w-full text-slate-200">
@@ -315,23 +315,31 @@ export default function Settings() {
             </div>
           </div>
         </div>
-
         {/* Buttons Row */}
         <div className="flex items-center gap-4 mt-4 border-t border-slate-900 pt-6">
           <button
             type="submit"
             disabled={saving}
-            className={`flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold bg-violet-600 hover:bg-violet-700 text-white transition-all cursor-pointer shadow-lg shadow-violet-600/10 ${
+            style={{ minWidth: '185px' }}
+            className={`flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-bold bg-violet-600 hover:bg-violet-700 text-white transition-all cursor-pointer shadow-lg shadow-violet-600/10 ${
               saving ? 'opacity-50 cursor-not-allowed' : ''
             }`}
           >
-            <Save className="w-4 h-4" /> {saving ? "Saving Changes..." : "Save Configuration"}
+            {saving ? (
+              <Loader2 className="w-4 h-4 animate-spin text-white" />
+            ) : (
+              <Save className="w-4 h-4" />
+            )}
+            {saving ? "Saving Changes..." : "Save Configuration"}
           </button>
           
           <button
             type="button"
             onClick={handleReset}
-            className="flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold border border-slate-800 text-slate-400 hover:text-white hover:border-slate-600 hover:bg-slate-950/20 transition-all cursor-pointer"
+            disabled={saving}
+            className={`flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold border border-slate-800 text-slate-400 hover:text-white hover:border-slate-600 hover:bg-slate-950/20 transition-all cursor-pointer ${
+              saving ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
           >
             <RotateCcw className="w-4 h-4" /> Reset Defaults
           </button>
