@@ -124,8 +124,26 @@ class SensorNode:
             last_heartbeat_tx = 0
             self.last_battery_update = time.time()
 
+            last_config_check = 0
             while True:
                 current_time = time.time()
+                
+                # Dynamic config reload every 5 seconds
+                if current_time - last_config_check >= 5.0:
+                    last_config_check = current_time
+                    try:
+                        with open(CONFIG_PATH, "r", encoding="utf-8") as f:
+                            new_config = json.load(f)
+                            self.config = new_config
+                            sim_config = new_config.get('simulation', {})
+                            self.battery_discharge_heartbeat = sim_config.get('battery_discharge_heartbeat', 0.1)
+                            self.battery_discharge_data = sim_config.get('battery_discharge_data', 0.5)
+                            self.battery_discharge_idle = sim_config.get('battery_discharge_idle', 0.01)
+                            self.rssi_baseline = sim_config.get('rssi_baseline', -60.0)
+                            self.rssi_noise = sim_config.get('rssi_noise', 3.0)
+                    except Exception as e:
+                        # Silently pass to avoid disrupting node execution
+                        pass
                 
                 # Update idle battery usage
                 self.update_battery(current_time)

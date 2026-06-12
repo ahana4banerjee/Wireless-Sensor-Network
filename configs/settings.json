@@ -13,7 +13,14 @@
         "battery_discharge_data": 0.5,
         "battery_discharge_idle": 0.01,
         "rssi_baseline": -60.0,
-        "rssi_noise": 3.0
+        "rssi_noise": 3.0,
+        "polling_interval": 10
     },
-    "cities": ["Hyderabad", "Delhi", "Mumbai", "Bangalore", "Secunderabad"]
+    "cities": [
+        "Hyderabad",
+        "Delhi",
+        "Mumbai",
+        "Bangalore",
+        "Secunderabad"
+    ]
 }

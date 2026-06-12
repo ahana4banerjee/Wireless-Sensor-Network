@@ -109,3 +109,20 @@ class NetworkHealthHistoryRecord(BaseModel):
     signal_score: float
     latency_score: float
     packet_loss_score: float
+
+class SimulationSettings(BaseModel):
+    data_interval: int
+    heartbeat_interval: int
+    packet_loss_rate: float
+    max_delay_ms: int
+    battery_discharge_heartbeat: float
+    battery_discharge_data: float
+    battery_discharge_idle: float
+    rssi_baseline: float
+    rssi_noise: float
+    polling_interval: int
+
+class SettingsResponse(BaseModel):
+    mqtt: dict
+    simulation: SimulationSettings
+    cities: List[str]
