@@ -6,6 +6,7 @@ import { CardSkeleton, TableSkeleton, ErrorCard } from '../ui/Skeletons';
 export default function Alerts() {
   const [activeAlerts, setActiveAlerts] = useState({ data: [], loading: true, error: null });
   const [historyAlerts, setHistoryAlerts] = useState({ data: [], loading: true, error: null });
+  const [refreshing, setRefreshing] = useState(false);
 
   const fetchActiveAlerts = async (silent = false) => {
     try {
@@ -38,7 +39,15 @@ export default function Alerts() {
   }, []);
 
   const handleForceRefresh = () => {
-    loadAll(false);
+    setRefreshing(true);
+    const delay = new Promise(resolve => setTimeout(resolve, 2000));
+    const fetchPromise = Promise.all([
+      fetchActiveAlerts(false),
+      fetchHistoryAlerts(false)
+    ]);
+    Promise.all([fetchPromise, delay]).finally(() => {
+      setRefreshing(false);
+    });
   };
 
   useEffect(() => {
@@ -58,7 +67,7 @@ export default function Alerts() {
     return { bg: "bg-amber-500/10 border-amber-500/25 text-amber-400", label: "Warning" };
   };
 
-  const isAnyLoading = activeAlerts.loading || historyAlerts.loading;
+  const isAnyLoading = activeAlerts.loading || historyAlerts.loading || refreshing;
 
   return (
     <div className="flex flex-col gap-8 w-full">

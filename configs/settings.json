@@ -6,7 +6,7 @@
     },
     "simulation": {
         "data_interval": 60,
-        "heartbeat_interval": 10,
+        "heartbeat_interval": 20,
         "packet_loss_rate": 0.05,
         "max_delay_ms": 1500,
         "battery_discharge_heartbeat": 0.1,
@@ -14,7 +14,7 @@
         "battery_discharge_idle": 0.01,
         "rssi_baseline": -60.0,
         "rssi_noise": 3.0,
-        "polling_interval": 12
+        "polling_interval": 10
     },
     "cities": [
         "Hyderabad",

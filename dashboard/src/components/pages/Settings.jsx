@@ -20,6 +20,7 @@ export default function Settings() {
   const [formData, setFormData] = useState(DEFAULTS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [resetting, setResetting] = useState(false);
   const [notification, setNotification] = useState(null); // { type: 'success' | 'error', message: string }
 
   // Load active configurations on mount
@@ -91,10 +92,13 @@ export default function Settings() {
 
     setSaving(true);
     setNotification(null);
+    const delay = new Promise(resolve => setTimeout(resolve, 2000));
     try {
       await wsnApi.updateSettings(formData);
+      await delay;
       setNotification({ type: 'success', message: "Configurations saved successfully! Virtual nodes will dynamically reload updates within 5s." });
     } catch (err) {
+      await delay;
       setNotification({ type: 'error', message: err.message || "Failed to update configurations." });
     } finally {
       setSaving(false);
@@ -102,9 +106,15 @@ export default function Settings() {
   };
 
   const handleReset = () => {
-    setFormData(DEFAULTS);
-    setNotification({ type: 'info', message: "Fields reset to factory default values. Click Save to persist." });
+    setResetting(true);
+    setNotification(null);
+    setTimeout(() => {
+      setFormData(DEFAULTS);
+      setNotification({ type: 'info', message: "Fields reset to factory default values. Click Save to persist." });
+      setResetting(false);
+    }, 2000);
   };
+
 
   if (loading) {
     return (
@@ -319,10 +329,10 @@ export default function Settings() {
         <div className="flex items-center gap-4 mt-4 border-t border-slate-900 pt-6">
           <button
             type="submit"
-            disabled={saving}
+            disabled={saving || resetting}
             style={{ minWidth: '185px' }}
             className={`flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-bold bg-violet-600 hover:bg-violet-700 text-white transition-all cursor-pointer shadow-lg shadow-violet-600/10 ${
-              saving ? 'opacity-50 cursor-not-allowed' : ''
+              (saving || resetting) ? 'opacity-50 cursor-not-allowed' : ''
             }`}
           >
             {saving ? (
@@ -336,12 +346,18 @@ export default function Settings() {
           <button
             type="button"
             onClick={handleReset}
-            disabled={saving}
-            className={`flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold border border-slate-800 text-slate-400 hover:text-white hover:border-slate-600 hover:bg-slate-950/20 transition-all cursor-pointer ${
-              saving ? 'opacity-50 cursor-not-allowed' : ''
+            disabled={saving || resetting}
+            style={{ minWidth: '155px' }}
+            className={`flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-bold border border-slate-800 text-slate-400 hover:text-white hover:border-slate-600 hover:bg-slate-950/20 transition-all cursor-pointer ${
+              (saving || resetting) ? 'opacity-50 cursor-not-allowed' : ''
             }`}
           >
-            <RotateCcw className="w-4 h-4" /> Reset Defaults
+            {resetting ? (
+              <Loader2 className="w-4 h-4 animate-spin text-slate-400" />
+            ) : (
+              <RotateCcw className="w-4 h-4" />
+            )}
+            {resetting ? "Resetting..." : "Reset Defaults"}
           </button>
         </div>
 
