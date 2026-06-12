@@ -10,8 +10,10 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 # Define paths relative to the script location
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATASET_PATH = os.path.abspath(os.path.join(BASE_DIR, "..", "..", "data", "processed", "wsn_dataset.csv"))
-PREDICTIONS_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", "..", "data", "predictions"))
+PREDICTIONS_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", "..", "predictions", "environmental_predictions"))
 MODELS_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", "..", "models"))
+PLOTS_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", "..", "plots", "environmental"))
+REPORTS_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", "..", "reports"))
 
 # Features defined by user requirements
 TEMP_FEATURES = ["unix_ts", "pressure", "wind_speed", "humidity", "hour", "day", "month"]
@@ -112,6 +114,8 @@ def run_environment_predictor():
     # Ensure folders exist
     os.makedirs(PREDICTIONS_DIR, exist_ok=True)
     os.makedirs(MODELS_DIR, exist_ok=True)
+    os.makedirs(PLOTS_DIR, exist_ok=True)
+    os.makedirs(REPORTS_DIR, exist_ok=True)
     
     # 1. Load data
     try:
@@ -134,7 +138,7 @@ def run_environment_predictor():
     joblib.dump(temp_model, temp_model_pkl)
     print(f"Persisted Model A to: {temp_model_pkl}")
     
-    temp_plot_png = os.path.join(PREDICTIONS_DIR, "temperature_prediction.png")
+    temp_plot_png = os.path.join(PLOTS_DIR, "temperature_prediction.png")
     plot_predictions(temp_preds_df, "Temperature (°C)", temp_plot_png)
     
     # 3. Model B: Humidity Prediction
@@ -151,11 +155,11 @@ def run_environment_predictor():
     joblib.dump(humidity_model, humidity_model_pkl)
     print(f"Persisted Model B to: {humidity_model_pkl}")
     
-    humidity_plot_png = os.path.join(PREDICTIONS_DIR, "humidity_prediction.png")
+    humidity_plot_png = os.path.join(PLOTS_DIR, "humidity_prediction.png")
     plot_predictions(humidity_preds_df, "Humidity (%)", humidity_plot_png)
     
     # 4. Generate Diagnostic Summary Report
-    report_path = os.path.join(PREDICTIONS_DIR, "prediction_report.txt")
+    report_path = os.path.join(REPORTS_DIR, "prediction_report.txt")
     print(f"\nWriting environmental prediction report to: {report_path}...")
     
     with open(report_path, "w", encoding="utf-8") as f:

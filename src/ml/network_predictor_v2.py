@@ -9,14 +9,16 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 # Define paths relative to the script location
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATASET_PATH = os.path.abspath(os.path.join(BASE_DIR, "..", "..", "data", "processed", "wsn_dataset.csv"))
-PREDICTIONS_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", "..", "data", "predictions"))
+PREDICTIONS_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", "..", "predictions", "network_predictions"))
 MODELS_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", "..", "models"))
-PLOTS_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", "..", "plots"))
+PLOTS_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", "..", "plots", "network"))
+REPORTS_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", "..", "reports"))
 
 # Ensure directories exist
 os.makedirs(PREDICTIONS_DIR, exist_ok=True)
 os.makedirs(MODELS_DIR, exist_ok=True)
 os.makedirs(PLOTS_DIR, exist_ok=True)
+os.makedirs(REPORTS_DIR, exist_ok=True)
 
 def calculate_network_health(data):
     """
@@ -318,7 +320,7 @@ def run_gradient_boosting_predictors():
             "predicted": y_pred
         }).sort_values("unix_ts")
         preds_df.to_csv(os.path.join(PREDICTIONS_DIR, pred_file), index=False)
-        print(f"  * Predictions saved to: data/predictions/{pred_file}")
+        print(f"  * Predictions saved to: predictions/network_predictions/{pred_file}")
         
         # Save plots
         plot_output_path = os.path.join(PLOTS_DIR, plot_file)
@@ -326,7 +328,7 @@ def run_gradient_boosting_predictors():
         
     # 4. Generate Comparative Summary Report
     lr_metrics = get_lr_metrics()
-    report_path = os.path.join(PREDICTIONS_DIR, "gradient_boosting_report.txt")
+    report_path = os.path.join(REPORTS_DIR, "gradient_boosting_report.txt")
     
     print(f"\nWriting comparative report to: {report_path}...")
     with open(report_path, "w", encoding="utf-8") as f:

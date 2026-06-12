@@ -6,7 +6,9 @@ import matplotlib.pyplot as plt
 # Define absolute paths based on this file's location to ensure it runs from any CWD
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATASET_PATH = os.path.abspath(os.path.join(BASE_DIR, "..", "..", "data", "processed", "wsn_dataset.csv"))
-ANALYSIS_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", "..", "data", "analysis"))
+ENV_PLOTS_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", "..", "plots", "environmental"))
+NET_PLOTS_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", "..", "plots", "network"))
+REPORTS_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", "..", "reports"))
 
 FEATURES = [
     "temp", "humidity", "pressure", "battery_level", 
@@ -22,9 +24,11 @@ def run_data_analysis():
         print(f"Error: Processed dataset not found at {DATASET_PATH}")
         return None
 
-    # Ensure output analysis directory exists
-    os.makedirs(ANALYSIS_DIR, exist_ok=True)
-    print(f"Analysis directory prepared at: {ANALYSIS_DIR}")
+    # Ensure output directories exist
+    os.makedirs(ENV_PLOTS_DIR, exist_ok=True)
+    os.makedirs(NET_PLOTS_DIR, exist_ok=True)
+    os.makedirs(REPORTS_DIR, exist_ok=True)
+    print(f"Output directories prepared.")
 
     try:
         # 1. Load dataset
@@ -49,7 +53,7 @@ def run_data_analysis():
         plt.xlabel('Temperature (°C)')
         plt.ylabel('Frequency')
         plt.grid(True, linestyle='--', alpha=0.7)
-        temp_plot = os.path.join(ANALYSIS_DIR, "temperature_distribution.png")
+        temp_plot = os.path.join(ENV_PLOTS_DIR, "temperature_distribution.png")
         plt.savefig(temp_plot, dpi=150, bbox_inches='tight')
         plt.close()
         plot_files.append(temp_plot)
@@ -61,7 +65,7 @@ def run_data_analysis():
         plt.xlabel('Humidity (%)')
         plt.ylabel('Frequency')
         plt.grid(True, linestyle='--', alpha=0.7)
-        hum_plot = os.path.join(ANALYSIS_DIR, "humidity_distribution.png")
+        hum_plot = os.path.join(ENV_PLOTS_DIR, "humidity_distribution.png")
         plt.savefig(hum_plot, dpi=150, bbox_inches='tight')
         plt.close()
         plot_files.append(hum_plot)
@@ -73,7 +77,7 @@ def run_data_analysis():
         plt.xlabel('Battery Level (%)')
         plt.ylabel('Frequency')
         plt.grid(True, linestyle='--', alpha=0.7)
-        bat_plot = os.path.join(ANALYSIS_DIR, "battery_level_distribution.png")
+        bat_plot = os.path.join(NET_PLOTS_DIR, "battery_level_distribution.png")
         plt.savefig(bat_plot, dpi=150, bbox_inches='tight')
         plt.close()
         plot_files.append(bat_plot)
@@ -85,7 +89,7 @@ def run_data_analysis():
         plt.xlabel('Signal Strength (dBm)')
         plt.ylabel('Frequency')
         plt.grid(True, linestyle='--', alpha=0.7)
-        rssi_plot = os.path.join(ANALYSIS_DIR, "signal_strength_distribution.png")
+        rssi_plot = os.path.join(NET_PLOTS_DIR, "signal_strength_distribution.png")
         plt.savefig(rssi_plot, dpi=150, bbox_inches='tight')
         plt.close()
         plot_files.append(rssi_plot)
@@ -97,7 +101,7 @@ def run_data_analysis():
         plt.xlabel('Latency (ms)')
         plt.ylabel('Frequency')
         plt.grid(True, linestyle='--', alpha=0.7)
-        lat_plot = os.path.join(ANALYSIS_DIR, "latency_distribution.png")
+        lat_plot = os.path.join(NET_PLOTS_DIR, "latency_distribution.png")
         plt.savefig(lat_plot, dpi=150, bbox_inches='tight')
         plt.close()
         plot_files.append(lat_plot)
@@ -109,7 +113,7 @@ def run_data_analysis():
         plt.xlabel('Packet Loss Rate (%)')
         plt.ylabel('Frequency')
         plt.grid(True, linestyle='--', alpha=0.7)
-        loss_plot = os.path.join(ANALYSIS_DIR, "packet_loss_distribution.png")
+        loss_plot = os.path.join(NET_PLOTS_DIR, "packet_loss_distribution.png")
         plt.savefig(loss_plot, dpi=150, bbox_inches='tight')
         plt.close()
         plot_files.append(loss_plot)
@@ -135,7 +139,7 @@ def run_data_analysis():
                 
         plt.title("Feature Correlation Matrix")
         plt.tight_layout()
-        corr_plot = os.path.join(ANALYSIS_DIR, "correlation_matrix.png")
+        corr_plot = os.path.join(NET_PLOTS_DIR, "correlation_matrix.png")
         plt.savefig(corr_plot, dpi=150, bbox_inches='tight')
         plt.close()
         plot_files.append(corr_plot)
@@ -148,7 +152,7 @@ def run_data_analysis():
             anomaly_pct = float(anomalies_count / total_rows * 100.0)
 
         # 5. Write diagnostic report
-        report_path = os.path.join(ANALYSIS_DIR, "report.txt")
+        report_path = os.path.join(REPORTS_DIR, "report.txt")
         print(f"Writing diagnostic summary report to {report_path}...")
         
         with open(report_path, "w", encoding="utf-8") as f:

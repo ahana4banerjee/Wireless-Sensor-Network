@@ -10,8 +10,10 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 # Define paths relative to the script location
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATASET_PATH = os.path.abspath(os.path.join(BASE_DIR, "..", "..", "data", "processed", "wsn_dataset.csv"))
-PREDICTIONS_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", "..", "data", "predictions"))
+PREDICTIONS_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", "..", "predictions", "network_predictions"))
 MODELS_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", "..", "models"))
+PLOTS_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", "..", "plots", "network"))
+REPORTS_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", "..", "reports"))
 
 # Feature and target columns based on requirements
 BATTERY_FEATURES = ["unix_ts", "signal_strength", "latency_ms", "packet_loss_rate", "anomaly_flag"]
@@ -122,6 +124,8 @@ def run_network_predictor():
     """Main execution orchestrator for training, plotting, and summarizing."""
     os.makedirs(PREDICTIONS_DIR, exist_ok=True)
     os.makedirs(MODELS_DIR, exist_ok=True)
+    os.makedirs(PLOTS_DIR, exist_ok=True)
+    os.makedirs(REPORTS_DIR, exist_ok=True)
     
     try:
         df = load_and_preprocess_data()
@@ -221,9 +225,9 @@ def run_network_predictor():
     print("Exported model predictions and health scores to CSVs.")
     
     # 4. Generate comparison plots
-    plot_predictions(battery_predictions, "Battery Level (%)", os.path.join(PREDICTIONS_DIR, "battery_prediction.png"))
-    plot_predictions(latency_predictions, "Latency (ms)", os.path.join(PREDICTIONS_DIR, "latency_prediction.png"))
-    plot_predictions(loss_predictions, "Packet Loss Rate (%)", os.path.join(PREDICTIONS_DIR, "packet_loss_prediction.png"))
+    plot_predictions(battery_predictions, "Battery Level (%)", os.path.join(PLOTS_DIR, "battery_prediction.png"))
+    plot_predictions(latency_predictions, "Latency (ms)", os.path.join(PLOTS_DIR, "latency_prediction.png"))
+    plot_predictions(loss_predictions, "Packet Loss Rate (%)", os.path.join(PLOTS_DIR, "packet_loss_prediction.png"))
     
     # Network Health Score Comparison Plot
     health_predictions = pd.DataFrame({
@@ -231,10 +235,10 @@ def run_network_predictor():
         "actual": test_df["actual_health"],
         "predicted": test_df["predicted_health"]
     }).sort_values("unix_ts")
-    plot_predictions(health_predictions, "Network Health Score (0-100)", os.path.join(PREDICTIONS_DIR, "network_health_score.png"))
+    plot_predictions(health_predictions, "Network Health Score (0-100)", os.path.join(PLOTS_DIR, "network_health_score.png"))
     
     # 5. Write Report
-    report_path = os.path.join(PREDICTIONS_DIR, "network_prediction_report.txt")
+    report_path = os.path.join(REPORTS_DIR, "network_prediction_report.txt")
     with open(report_path, "w", encoding="utf-8") as f:
         f.write("====================================================\n")
         f.write("     WSN NETWORK PREDICTIVE INTELLIGENCE REPORT      \n")

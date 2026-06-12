@@ -8,11 +8,11 @@ router = APIRouter()
 
 # Define predictions absolute paths
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-PREDICTIONS_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", "..", "..", "data", "predictions"))
+PREDICTIONS_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", "..", "..", "predictions"))
 
-def load_predictions(filename, limit=100):
+def load_predictions(subfolder, filename, limit=100):
     """Loads target predictions CSV file and returns the latest records."""
-    file_path = os.path.join(PREDICTIONS_DIR, filename)
+    file_path = os.path.join(PREDICTIONS_DIR, subfolder, filename)
     if not os.path.exists(file_path):
         raise HTTPException(
             status_code=404, 
@@ -39,9 +39,9 @@ def load_predictions(filename, limit=100):
 @router.get("/predictions/temperature", response_model=List[PredictionRecord])
 def get_temperature_predictions(limit: int = 100):
     """Returns the latest temperature predictions containing actuals vs predicted values."""
-    return load_predictions("temperature_predictions.csv", limit)
+    return load_predictions("environmental_predictions", "temperature_predictions.csv", limit)
 
 @router.get("/predictions/humidity", response_model=List[PredictionRecord])
 def get_humidity_predictions(limit: int = 100):
     """Returns the latest humidity predictions containing actuals vs predicted values."""
-    return load_predictions("humidity_predictions.csv", limit)
+    return load_predictions("environmental_predictions", "humidity_predictions.csv", limit)
