@@ -65,6 +65,7 @@ class AnalyticsSummary(BaseModel):
     average_battery_level: float
     average_latency: float
     average_packet_loss: float
+    average_network_health: Optional[float] = 0.0
 
 class AlertResponse(BaseModel):
     node_id: str
@@ -98,3 +99,13 @@ class SystemScoreResponse(BaseModel):
     status_counts: Dict[str, int]
     active_nodes: int
     system_status: str
+
+class NetworkHealthHistoryRecord(BaseModel):
+    timestamp: str
+    unix_ts: float
+    node_id: str
+    network_health_score: float
+    battery_score: float
+    signal_score: float
+    latency_score: float
+    packet_loss_score: float

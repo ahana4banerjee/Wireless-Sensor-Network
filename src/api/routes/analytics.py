@@ -1,7 +1,8 @@
 import os
 import pandas as pd
 from fastapi import APIRouter, HTTPException
-from ..schemas import AnomaliesResponse, AnalyticsSummary, AnomalyRecord
+from typing import List
+from ..schemas import AnomaliesResponse, AnalyticsSummary, AnomalyRecord, NetworkHealthHistoryRecord
 
 router = APIRouter()
 
@@ -84,7 +85,8 @@ def get_analytics_summary():
             average_humidity=0.0,
             average_battery_level=0.0,
             average_latency=0.0,
-            average_packet_loss=0.0
+            average_packet_loss=0.0,
+            average_network_health=0.0
         )
         
     avg_temp = float(df["temp"].mean())
@@ -92,6 +94,7 @@ def get_analytics_summary():
     avg_bat = float(df["battery_level"].mean())
     avg_lat = float(df["latency_ms"].mean())
     avg_loss = float(df["packet_loss_rate"].mean())
+    avg_health = float(df["network_health_score"].mean()) if "network_health_score" in df.columns else 100.0
     
     return AnalyticsSummary(
         total_records=total_records,
@@ -100,5 +103,40 @@ def get_analytics_summary():
         average_humidity=round(avg_hum, 2),
         average_battery_level=round(avg_bat, 2),
         average_latency=round(avg_lat, 2),
-        average_packet_loss=round(avg_loss, 2)
+        average_packet_loss=round(avg_loss, 2),
+        average_network_health=round(avg_health, 2)
     )
+
+@router.get("/analytics/network-health-history", response_model=List[NetworkHealthHistoryRecord])
+def get_network_health_history(limit: int = 150):
+    """Returns historical network health index records for WSN network intelligence trend charts."""
+    df = load_dataset()
+    
+    # Fill missing scores just in case
+    for col in ["battery_score", "signal_score", "latency_score", "packet_loss_score", "network_health_score"]:
+        if col not in df.columns:
+            df[col] = 100.0 if col != "network_health_score" else 100.0
+            
+    # Get latest 'limit' rows
+    df_recent = df.sort_values(by="unix_ts", ascending=False).head(limit)
+    # Sort back chronologically for Recharts rendering
+    df_recent = df_recent.sort_values(by="unix_ts", ascending=True)
+    
+    records = []
+    for _, row in df_recent.iterrows():
+        row_dict = row.to_dict()
+        for k, v in row_dict.items():
+            if pd.isna(v):
+                row_dict[k] = 100.0 if k in ["battery_score", "signal_score", "latency_score", "packet_loss_score", "network_health_score"] else ""
+        
+        records.append(NetworkHealthHistoryRecord(
+            timestamp=str(row_dict.get("timestamp", "")),
+            unix_ts=float(row_dict.get("unix_ts", 0.0)),
+            node_id=str(row_dict.get("node_id", "")),
+            network_health_score=float(row_dict.get("network_health_score", 100.0)),
+            battery_score=float(row_dict.get("battery_score", 100.0)),
+            signal_score=float(row_dict.get("signal_score", 100.0)),
+            latency_score=float(row_dict.get("latency_score", 100.0)),
+            packet_loss_score=float(row_dict.get("packet_loss_score", 100.0))
+        ))
+    return records

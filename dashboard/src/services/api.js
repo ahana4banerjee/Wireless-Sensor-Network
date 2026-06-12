@@ -26,4 +26,5 @@ export const wsnApi = {
   getNetworkHealth: () => fetchFromApi("/api/network-health"),
   getNetworkPredictions: (limit = 100) => fetchFromApi(`/api/network-predictions?limit=${limit}`),
   getSystemScore: () => fetchFromApi("/api/system-score"),
+  getNetworkHealthHistory: (limit = 150) => fetchFromApi(`/api/analytics/network-health-history?limit=${limit}`),
 };
