@@ -74,3 +74,36 @@ html, body {
   stroke-dasharray: 8, 4;
   animation: flow-active 1.2s linear infinite !important;
 }
+
+/* Print styles for high-fidelity PDF Snapshot printing */
+@media print {
+  aside,
+  button,
+  select,
+  .no-print,
+  .flex-1.min-h-\[200px\] {
+    display: none !important;
+  }
+  
+  html, body, main {
+    background-color: #090d16 !important;
+    color: #f3f4f6 !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  main {
+    padding: 10px !important;
+  }
+
+  .glass-card {
+    page-break-inside: avoid;
+    box-shadow: none !important;
+    background-color: #0b1121 !important;
+    border-color: #1e293b !important;
+  }
+}
