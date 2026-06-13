@@ -7,5 +7,3 @@ __pycache__/
 .idea/
 .vscode/
 *.log
-
-data/logs/*.csv
