@@ -80,12 +80,16 @@ def update_settings(payload: SimulationSettings):
     validate_simulation_settings(payload)
     
     config = load_settings_json()
-    config["simulation"] = payload.dict()
+    prev_demo_mode = config.get("simulation", {}).get("demo_mode", False)
+    
+    new_sim = payload.dict()
+    new_sim["demo_mode"] = prev_demo_mode  # Always preserve settings.json demo_mode flag
+    config["simulation"] = new_sim
     
     save_settings_json(config)
     
     return SettingsResponse(
         mqtt=config.get("mqtt", {}),
-        simulation=payload,
+        simulation=SimulationSettings(**new_sim),
         cities=config.get("cities", [])
     )

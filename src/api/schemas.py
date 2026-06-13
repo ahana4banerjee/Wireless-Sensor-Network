@@ -121,6 +121,7 @@ class SimulationSettings(BaseModel):
     rssi_baseline: float
     rssi_noise: float
     polling_interval: int
+    demo_mode: Optional[bool] = False
 
 class SettingsResponse(BaseModel):
     mqtt: dict

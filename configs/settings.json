@@ -14,7 +14,8 @@
         "battery_discharge_idle": 0.01,
         "rssi_baseline": -60.0,
         "rssi_noise": 3.0,
-        "polling_interval": 10
+        "polling_interval": 10,
+        "demo_mode": true
     },
     "cities": [
         "Hyderabad",

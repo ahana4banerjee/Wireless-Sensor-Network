@@ -5,6 +5,7 @@ import pandas as pd
 from fastapi import APIRouter, HTTPException
 from typing import List
 from ..schemas import NodesResponse, NodeHealth, TelemetryRecord
+from src.api.demo import is_demo_mode, get_demo_telemetry_for_all
 
 router = APIRouter()
 
@@ -13,7 +14,10 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 LOG_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", "..", "..", "data", "logs"))
 
 def get_latest_telemetry_for_all():
-    """Reads the final row of each city telemetry history log file."""
+    """Reads the final row of each city telemetry history log file, or replays data in Demo Mode."""
+    if is_demo_mode():
+        return get_demo_telemetry_for_all()
+        
     telemetry = []
     if not os.path.exists(LOG_DIR):
         return telemetry
