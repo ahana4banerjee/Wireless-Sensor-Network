@@ -204,6 +204,29 @@ The architecture routes meteorological payloads and network diagnostics paramete
 6.  **REST API Layer (FastAPI)**: Serves clean Pydantic routes, handles input validations, and maps CORS headers for Vite clients.
 7.  **Client Dashboard**: React SPA rendering interactive topology components, time-series graphs, and alarm registers.
 
+### Portfolio Demo Mode Replay Flow
+For production staging or public portfolio deployments where active background services (like MQTT brokers, Python node simulators, and OpenWeather APIs) cannot run continuously, the backend implements a stateless **Demo Mode Replay Engine** in [`demo.py`](file:///d:/Projects/College/Wireless-Sensor-Network/src/api/demo.py).
+
+When active, it intercepts data queries and serves replayed historical telemetry from existing dataset logs:
+```text
+  [ Node CSV Files & Rotating Logs ]
+                  │
+                  ▼ (Stateless Replay Modulo Index based on System Clock)
+  [ Demo Mode Interceptor ] ◄── (Bypasses MQTT, Ingestor, and simulator nodes)
+                  │
+                  ▼ (Overwrites timestamps dynamically with current epoch times)
+  [ FastAPI REST Server Gateway Routing ]
+                  │
+                  ▼
+  [ React WSN Control Room Dashboard ]
+```
+1.  **Status Check**: The interceptor verifies if Demo Mode is enabled by checking the `DEMO_MODE` environment variable (highest priority) or checking `"demo_mode"` inside `configs/settings.json`.
+2.  **Tick Calculation**: Calculates a virtual replay tick index based on the wall-clock time divided by the configured `polling_interval` (default 10s):
+    $$\text{tick} = \lfloor\frac{\text{unix\_time}}{\text{polling\_interval}}\rfloor$$
+3.  **Cyclic Telemetry Selection**: Sequentially loops through each city's historical dataset using a modulo wrap-around index:
+    $$\text{index} = \text{tick} \pmod{\text{dataset\_length}}$$
+4.  **Live Watchdog Syncing**: Automatically replaces historical timestamp columns with the current system time. This keeps nodes marked as `ONLINE` (green connectivity links) under the dashboard's 45-second watchdog check-in threshold.
+
 ---
 
 ## 6. Features Checklist
@@ -217,6 +240,7 @@ The architecture routes meteorological payloads and network diagnostics paramete
 *   [x] Battery depletion simulation (state-based idle, heartbeat, and transmission decay)
 *   [x] Battery wrap-around reset modeling (simulates manual field swaps)
 *   [x] RSSI distance-attenuation simulation with Gaussian noise
+*   [x] Stateless Demo Mode Portfolio Replay Engine
 
 ### Backend & Ingestion
 *   [x] Multithreaded message ingestion subscribers
@@ -321,8 +345,14 @@ Wireless-Sensor-Network/
 ├── plots/                       # Model evaluations comparison plots
 ├── predictions/                 # Exported forecasts logs
 ├── reports/                     # Model metrics reports and analytics summaries
+├── scratch/                     # Temporary and verification scripts
+│   ├── test_demo_mode.py        # Demo Mode verification script
+│   └── test_settings_api.py     # Settings schema and bounds check script
 ├── src/                         # Backend Python scripts
 │   ├── api/                     # FastAPI routing and controller logic
+│   │   ├── routes/              # Sub-routers for nodes, settings, etc.
+│   │   ├── demo.py              # Stateless portfolio demo replay engine
+│   │   ├── schemas.py           # Pydantic data validation models
 │   │   └── main.py              # API server entrypoint
 │   ├── ml/                      # Machine learning training scripts
 │   ├── backend.py               # MQTT subscriber backend and watchdog
@@ -401,7 +431,18 @@ net start mosquitto
     npm run dev
     ```
 
-### D. Expected URLs
+### E. Running in Portfolio Demo Mode
+If you do not want to run Mosquitto or simulator node processes (for example, for static web deployments), you can enable the stateless replay engine:
+*   **Via environment variables (Recommended)**:
+    ```bash
+    $env:DEMO_MODE="True" # Windows PowerShell
+    # Or on Unix: export DEMO_MODE=True
+    uvicorn src.api.main:app --host 127.0.0.1 --port 8000 --reload
+    ```
+*   **Via configuration files**:
+    Open `configs/settings.json`, set `"demo_mode": true` within the `"simulation"` block, and start the FastAPI server as usual.
+
+### F. Expected URLs
 *   **Vite React Client**: `http://localhost:5173`
 *   **FastAPI REST Gateway**: `http://127.0.0.1:8000`
 *   **FastAPI Documentation**: `http://127.0.0.1:8000/docs`
@@ -410,24 +451,25 @@ net start mosquitto
 
 ## 12. Local Execution Workflow
 ```text
-[ Start MQTT Mosquitto ] ──► [ Launch subscriber backend.py ]
-                                        │
-                                        ├─ Check CSV Schema Migrations
-                                        └─ Start Watchdog loop timers
-                                        │
-                                        ▼
+Standard Active Simulation Workflow:
+[ Start MQTT Mosquitto ] --> [ Launch subscriber backend.py ]
+                                        |
+                                        +- Check CSV Schema Migrations
+                                        \- Start Watchdog loop timers
+                                        |
+                                        v
                          [ Launch virtual main.py runner ]
-                                        │
-                                        ├─ Query OpenWeather values
-                                        └─ Broadcast telemetry status to Broker
-                                        │
-                                        ▼
+                                        |
+                                        +- Query OpenWeather values
+                                        \- Broadcast telemetry status to Broker
+                                        |
+                                        v
                        [ Retrain ml/network_predictor_v2.py ]
-                                        │
-                                        ▼
+                                        |
+                                        v
                         [ Launch REST api/main.py server ]
-                                        │
-                                        ▼
+                                        |
+                                        v
                          [ Launch Client SPA dashboard ]
 ```
 

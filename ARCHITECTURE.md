@@ -43,6 +43,36 @@ The Intelligent Wireless Sensor Network (WSN) System follows a modular, decouple
 
 ---
 
+# Data Flow Architecture (Portfolio Demo Mode)
+
+For public deployments or quick testing without active simulator processes (such as the Mosquitto MQTT broker and individual Python node scripts), the platform implements a stateless **Demo Mode**. It reads historical node telemetry files directly, calculates an offset index using current wall-clock ticks, and dynamically serves replayed metrics with updated timestamps over the REST API.
+
+```text
++------------------------+
+| Historical CSV Logs    |  ==> (Located in data/logs/*_history.csv)
++------------------------+
+            |
+            |  Modulo Replay Tick: tick = current_time / polling_interval
+            v
++------------------------+
+| Demo Mode Interceptor  |  ==> (Implemented in src/api/demo.py, overrides routes)
++------------------------+
+            |
+            |  Bypasses MQTT, virtual nodes, and subscription processor
+            v
++------------------------+
+|   FastAPI REST API     |  ==> (Port 8000, returns replayed data structured via Pydantic)
++------------------------+
+            |
+            |  HTTP / Fetch
+            v
++------------------------+
+|    React Frontend      |  ==> (Vite Client on Port 5173, displays ONLINE nodes)
++------------------------+
+```
+
+---
+
 # Data Flow Architecture (Phase 2: PICSimLab Hardware Simulation)
 
 ```text
@@ -211,7 +241,7 @@ The Python backend subscriber acts as the diagnostic and merging engine. The **F
 
 #### 11. Simulation Parameters Configuration
 * **Routes**: `GET /api/settings` & `POST /api/settings`
-* **Description**: Serves or saves the simulated metrics constraints profile, writing outputs to `configs/settings.json`.
+* **Description**: Serves or saves the simulated metrics constraints profile, writing outputs to `configs/settings.json`. Supports the optional `demo_mode` parameter to control stateless telemetry replay state.
 
 #### 12. Query Logs Export Engine
 * **Route**: `GET /api/export`

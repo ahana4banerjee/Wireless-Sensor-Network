@@ -126,6 +126,29 @@ The current architecture routes live atmospheric data and network quality metric
 6.  **REST API Layer**: Runs a FastAPI application exposing endpoint APIs. Formulates data via Pydantic model schemas and supports CORS mappings for local dashboard clients.
 7.  **Client Dashboard**: A responsive React dark-mode portal displaying system metrics, network topology lines, and active alarms.
 
+### Portfolio Demo Mode Replay Engine
+For production staging or public portfolio deployments where active background services (like MQTT brokers, Python node simulators, and OpenWeather APIs) cannot run continuously, the backend implements a stateless **Demo Mode Replay Engine** in [`demo.py`](file:///d:/Projects/College/Wireless-Sensor-Network/src/api/demo.py).
+
+When active, it intercepts data queries and serves replayed historical telemetry from existing dataset logs:
+```text
+  [ Node CSV Files & Rotating Logs ]
+                  │
+                  ▼ (Stateless Replay Modulo Index based on System Clock)
+  [ Demo Mode Interceptor ] ◄── (Bypasses MQTT, Ingestor, and simulator nodes)
+                  │
+                  ▼ (Overwrites timestamps dynamically with current epoch times)
+  [ FastAPI REST Server Gateway Routing ]
+                  │
+                  ▼
+  [ React WSN Control Room Dashboard ]
+```
+1.  **Status Check**: The interceptor verifies if Demo Mode is enabled by checking the `DEMO_MODE` environment variable (highest priority) or checking `"demo_mode"` inside `configs/settings.json`.
+2.  **Tick Calculation**: Calculates a virtual replay tick index based on the wall-clock time divided by the configured `polling_interval` (default 10s):
+    $$\text{tick} = \lfloor\frac{\text{unix\_time}}{\text{polling\_interval}}\rfloor$$
+3.  **Cyclic Telemetry Selection**: Sequentially loops through each city's historical dataset using a modulo wrap-around index:
+    $$\text{index} = \text{tick} \pmod{\text{dataset\_length}}$$
+4.  **Live Watchdog Syncing**: Automatically replaces historical timestamp columns with the current system time. This keeps nodes marked as `ONLINE` (green connectivity links) under the dashboard's 45-second watchdog check-in threshold.
+
 ---
 
 ## 4. Folder Structure
@@ -156,8 +179,14 @@ Wireless-Sensor-Network/
 ├── plots/                       # Feature performance plots
 ├── predictions/                 # Exported prediction logs
 ├── reports/                     # Model metrics reports and analytics summaries
+├── scratch/                     # Temporary and verification scripts
+│   ├── test_demo_mode.py        # Demo Mode verification script
+│   └── test_settings_api.py     # Settings schema and bounds check script
 ├── src/                         # Backend Python scripts
 │   ├── api/                     # FastAPI routing and controller logic
+│   │   ├── routes/              # Sub-routers for nodes, settings, etc.
+│   │   ├── demo.py              # Stateless portfolio demo replay engine
+│   │   ├── schemas.py           # Pydantic data validation models
 │   │   └── main.py              # API server entrypoint
 │   ├── ml/                      # Machine learning training scripts
 │   │   ├── anomaly_detection.py # Isolation Forest detection model
@@ -391,7 +420,7 @@ The FastAPI service runs in [`src/api/main.py`](file:///d:/Projects/College/Wire
 *   `GET /api/predictions/temperature` & `GET /api/predictions/humidity`
     *   *Purpose*: Retreives weather forecast data for temperature and humidity.
     *   *Response*: Array of actual vs. predicted values.
-*   `GET /api/predictions/network`
+*   `GET /api/network-predictions`
     *   *Purpose*: Exposes baseline and Gradient Boosting prediction metrics for battery, latency, and packet loss.
     *   *Response*: Chronological array of predictions vs. actuals.
 *   `GET /api/alerts`
@@ -403,6 +432,9 @@ The FastAPI service runs in [`src/api/main.py`](file:///d:/Projects/College/Wire
 *   `GET /api/settings` & `POST /api/settings`
     *   *Purpose*: Reads or updates active simulation parameters (intervals, battery consumption costs, packet loss rates) and saves them to `configs/settings.json`.
     *   *Response*: Confirmation of settings status.
+*   `GET /api/export`
+    *   *Purpose*: Queries historical sensor telemetry database records and exports results as a downloadable CSV dataset file.
+    *   *Response*: CSV file stream of filtered records.
 
 ---
 
@@ -448,6 +480,7 @@ We intentionally avoided generic "AI agency templates" characterized by flat sof
 *   **Gradient Boosting Regressors**: Solves time-series target data leakage via lag engineering, out-performing linear models when predicting battery decay and packet loss.
 *   **Deterministic Network Health Index**: Handled via explainable engineering scoring to provide consistent metrics to operators, resolving explainability issues with ML-based indicators.
 *   **Three-Phase Architecture**: Validating software pipelines first minimizes bare-metal debugging overhead.
+*   **Stateless Demo Mode Replay Engine**: Avoids deploying heavyweight Mosquitto brokers, Python ingestion subscriber daemons, and constant OpenWeather API queries during static web hosting. By computing a modulo-index based on standard time ticks, we serve loop-recorded telemetry records with updated timestamps, ensuring the frontend dashboard functions identically without backend simulator processes.
 
 ---
 
@@ -469,6 +502,7 @@ We intentionally avoided generic "AI agency templates" characterized by flat sof
 - [x] Visited Page Caching Mechanics
 - [x] Custom Loading Skeleton UI Templates
 - [x] Forced Action Spinner Timers
+- [x] Stateless Demo Mode Portfolio Replay Engine
 - [ ] Phase 2 PICSimLab Microcontroller Hardware Simulation
 - [ ] Phase 3 ESP8266/Arduino Physical Node Implementation
 
@@ -556,6 +590,17 @@ npm install
 npm run dev
 ```
 Open your web browser and navigate to the local hosting url (usually `http://localhost:5173`).
+
+### 8. Running in Portfolio Demo Mode
+If you do not want to run Mosquitto or simulator node processes (for example, for static web deployments), you can enable the stateless replay engine:
+*   **Via environment variables (Recommended)**:
+    ```bash
+    $env:DEMO_MODE="True" # Windows PowerShell
+    # Or on Unix: export DEMO_MODE=True
+    uvicorn src.api.main:app --host 127.0.0.1 --port 8000 --reload
+    ```
+*   **Via configuration files**:
+    Open `configs/settings.json`, set `"demo_mode": true` within the `"simulation"` block, and start the FastAPI server as usual.
 
 ---
 
