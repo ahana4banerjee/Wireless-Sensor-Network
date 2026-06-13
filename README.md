@@ -34,6 +34,31 @@
 
 ---
 
+<p align="center">
+
+<a href="https://wireless-sensor-network.vercel.app">
+  <img src="https://img.shields.io/badge/Live%20Dashboard-Visit-8b5cf6?style=for-the-badge" />
+</a>
+
+<a href="https://wireless-sensor-network.onrender.com/docs">
+  <img src="https://img.shields.io/badge/API-Swagger-06b6d4?style=for-the-badge" />
+</a>
+
+</p>
+
+---
+
+## 🌐 Live Deployment
+
+| Service | URL |
+|----------|------|
+| Dashboard | https://wireless-sensor-network.vercel.app |
+| API Documentation | https://wireless-sensor-network.onrender.com/docs |
+
+> **Note:** The public deployment runs in **Demo Mode**, replaying historical telemetry while preserving the complete analytics, anomaly detection, and prediction pipeline. Future phases will replace the replay engine with hardware-backed live telemetry.
+
+---
+
 ## 1. Project Overview & Banner
 
 The **Intelligent Wireless Sensor Network (WSN) Platform & Simulation** is a robust, modular platform engineered to bridge the gap between software-based network prototyping and physical hardware deployment. 
