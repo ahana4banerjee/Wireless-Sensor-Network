@@ -1,6 +1,37 @@
 # Intelligent Wireless Sensor Network (WSN) Platform & Simulation
 > An Intelligent Wireless Sensor Network Platform for Predictive Environmental and Network Analytics
 
+<p align="center">
+
+<img src="https://img.shields.io/badge/Phase-1%20Complete-10b981?style=for-the-badge" />
+<img src="https://img.shields.io/badge/Status-Active%20Development-8b5cf6?style=for-the-badge" />
+<img src="https://img.shields.io/badge/Architecture-Simulation%20First-3b82f6?style=for-the-badge" />
+
+</p>
+
+<p align="center">
+
+<img src="https://img.shields.io/badge/Python-3.10+-3776AB?style=flat-square&logo=python&logoColor=white" />
+<img src="https://img.shields.io/badge/FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white" />
+<img src="https://img.shields.io/badge/React-20232A?style=flat-square&logo=react&logoColor=61DAFB" />
+<img src="https://img.shields.io/badge/Vite-646CFF?style=flat-square&logo=vite&logoColor=white" />
+<img src="https://img.shields.io/badge/Tailwind_CSS-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white" />
+<img src="https://img.shields.io/badge/MQTT-660066?style=flat-square&logo=eclipsemosquitto&logoColor=white" />
+<img src="https://img.shields.io/badge/Mosquitto-3C5280?style=flat-square&logo=eclipsemosquitto&logoColor=white" />
+<img src="https://img.shields.io/badge/scikit--learn-F7931E?style=flat-square&logo=scikitlearn&logoColor=white" />
+<img src="https://img.shields.io/badge/pandas-150458?style=flat-square&logo=pandas&logoColor=white" />
+<img src="https://img.shields.io/badge/NumPy-013243?style=flat-square&logo=numpy&logoColor=white" />
+
+</p>
+
+<p align="center">
+
+<img src="https://img.shields.io/badge/IoT-Wireless%20Sensor%20Network-0EA5E9?style=flat-square" />
+<img src="https://img.shields.io/badge/Machine%20Learning-Predictive%20Analytics-9333EA?style=flat-square" />
+<img src="https://img.shields.io/badge/Anomaly%20Detection-Isolation%20Forest-EAB308?style=flat-square" />
+
+</p>
+
 ---
 
 ## 1. Project Overview & Banner
@@ -10,6 +41,76 @@ The **Intelligent Wireless Sensor Network (WSN) Platform & Simulation** is a rob
 Following a strict **simulation-first development philosophy**, the system models the complete physical, environmental, and networking behavior of a multi-node sensor grid entirely in software. This approach enables developers to construct and validate databases, ingestion gateways, machine learning forecasting engines, stateful fault diagnostic loggers, and operational dashboards before deploying code to physical hardware.
 
 By utilizing lightweight publish-subscribe protocols (MQTT), asynchronous API gateways, and dynamic frontend caching, the platform delivers an enterprise-grade Network Operations Center (NOC) environment. The system decouples telemetry generation from downstream analytics. Under this modular scheme, as the project scales through hardware iterations, **only the sensor nodes change**—the rest of the infrastructure remains reusable and unchanged.
+
+---
+
+### Dashboard Showcase
+
+The WSN Monitor dashboard is designed as a **Network Operations Center (NOC)** for monitoring distributed wireless sensor nodes in real time. It provides live telemetry, fault diagnostics, anomaly detection, predictive analytics, and explainable network health scoring through an interactive dark-mode interface.
+
+#### Mission Control
+
+The central operations console provides a live overview of gateway status, active nodes, MQTT topology, event streams, and overall network health.
+
+<p align="center">
+  <img src="docs/screenshots/mission-control.png" alt="Mission Control Dashboard" width="100%">
+</p>
+
+---
+
+#### Interactive MQTT Topology
+
+A live visualization of the Wireless Sensor Network showing broker connectivity, node status, and communication link health.
+
+<p align="center">
+  <img src="docs/screenshots/topology.png" alt="Interactive MQTT Topology" width="100%">
+</p>
+
+---
+
+#### Network Health Intelligence
+
+The platform computes a deterministic **Network Health Index (NHI)** for every node and visualizes historical operational trends across the entire sensor network.
+
+<p align="center">
+  <img src="docs/screenshots/network-health.png" alt="Network Health Analytics" width="100%">
+</p>
+
+---
+
+#### Environmental Prediction Engine
+
+Linear Regression models are used to forecast environmental telemetry and compare predicted values against actual observations.
+
+<p align="center">
+  <img src="docs/screenshots/environment-prediction.png" alt="Temperature Prediction" width="100%">
+</p>
+
+---
+
+#### Network Parameter Prediction Engine
+
+Gradient Boosting models forecast battery behavior, latency, and packet loss to support predictive maintenance and fault prevention.
+
+<p align="center">
+  <img src="docs/screenshots/network-prediction.png" alt="Battery Prediction" width="100%">
+</p>
+
+---
+
+## Core Dashboard Features
+
+- Real-time MQTT network monitoring
+- Interactive SVG topology visualization
+- Multi-node sensor simulation
+- Live event and incident stream
+- Isolation Forest anomaly detection
+- Environmental forecasting
+- Network parameter prediction
+- Explainable Network Health Index (NHI)
+- Fault diagnostics and watchdog monitoring
+- Configurable simulation parameters
+- Historical analytics and export center
 
 ---
 
@@ -157,7 +258,7 @@ The architecture routes meteorological payloads and network diagnostics paramete
 ### B. Environmental Forecasting
 *   **Model**: Linear Regression (`LinearRegression`)
 *   **Target Variables**: Temperature ($R^2 \approx 0.81$, MAE $\approx 0.99^\circ\text{C}$) and Humidity ($R^2 \approx 0.57$, MAE $\approx 8.03\%$).
-*   **Report**: Persisted inside [`reports/environmental_prediction_report.txt`](file:///d:/Projects/College/Wireless-Sensor-Network/reports/environmental_prediction_report.txt).
+*   **Report**: Persisted inside [`reports/environmental_prediction_report.txt`](reports/environmental_prediction_report.txt).
 
 ### C. Network Parameter Predictive Benchmarking
 *   **Target Variables**: Battery level, Latency in ms, and Packet loss rates.
@@ -166,7 +267,7 @@ The architecture routes meteorological payloads and network diagnostics paramete
 *   **Performance Delta**:
     *   **Battery Decay Model**: Achieved $R^2$ of **0.9721** (MAE reduced by 90.05% down to $2.49\%$).
     *   **Packet Loss Model**: Achieved $R^2$ of **0.7519** (MAE reduced by 56.91% down to $0.37\%$).
-*   **Report**: Comparative statistics are compiled inside [`reports/model_comparison_report.txt`](file:///d:/Projects/College/Wireless-Sensor-Network/reports/model_comparison_report.txt).
+*   **Report**: Comparative statistics are compiled inside [`reports/model_comparison_report.txt`](reports/model_comparison_report.txt).
 
 ### D. Deterministic Network Health Index (NHI)
 Machine learning models were originally trained to predict overall network health. However, this approach was **intentionally abandoned**. ML predictions of health index scores lacked explainability, fluctuated erratically, and were prone to target leakage. 
@@ -175,12 +276,6 @@ The system now implements a deterministic, explainable **Network Health Index (N
 
 $$\text{NHI} = 0.35 \times S_{\text{Battery}} + 0.25 \times S_{\text{Signal}} + 0.20 \times S_{\text{Latency}} + 0.20 \times S_{\text{Loss}}$$
 
-Where:
-*   $S_{\text{Battery}} = \text{battery\_level}$
-*   $S_{\text{Signal}} = \text{clamp}\left( \frac{\text{signal\_strength} - (-100.0)}{-30.0 - (-100.0)} \times 100.0,\, 0.0,\, 100.0 \right)$
-*   $S_{\text{Latency}} = \text{clamp}\left( \frac{1500.0 - \text{latency\_ms}}{1500.0} \times 100.0,\, 0.0,\, 100.0 \right)$
-*   $S_{\text{Loss}} = \text{clamp}\left( 100.0 - \text{packet\_loss\_rate},\, 0.0,\, 100.0 \right)$
-
 #### NHI Ranges & Status Labels
 *   `90.0 - 100.0` ➔ **EXCELLENT** (Healthy operations, green link states)
 *   `75.0 - 89.9`  ➔ **GOOD** (Stable connection, minor latency)
@@ -188,7 +283,7 @@ Where:
 *   `40.0 - 59.9`  ➔ **CRITICAL** (Heavy packet loss, battery warnings)
 *   `0.0 - 39.9`   ➔ **FAILING** (Critical node alerts, red link states)
 
-Detailed equations and data summaries are persisted in [`reports/network_health_report.txt`](file:///d:/Projects/College/Wireless-Sensor-Network/reports/network_health_report.txt).
+Detailed equations and data summaries are persisted in [`reports/network_health_report.txt`](reports/network_health_report.txt).
 
 ---
 
