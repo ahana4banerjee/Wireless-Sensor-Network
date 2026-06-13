@@ -109,6 +109,20 @@ We have successfully completed all Phase 1 software backend pipelines:
 * Added automated merging to [backend.py](file:///d:/Projects/College/Wireless-Sensor-Network/src/backend.py).
 * Upon receiving a new MQTT sensor payload, the backend automatically formats and appends the row to `wsn_dataset.csv`, ensuring the unified dataset stays synchronized in real time without needing manual aggregation scripts.
 
+### Milestone 9: Frontend Performance Enhancement via Lazy Loading & Skeleton UI
+* **Route Code-Splitting**: Migrated dashboard pages in [App.jsx](file:///d:/Projects/College/Wireless-Sensor-Network/dashboard/src/App.jsx) to dynamic imports using `React.lazy()` and wrapped them in `<Suspense>` with a pulsing `PageSkeleton`. This completely eliminated full-screen application reloaders when shifting tabs.
+* **Component-Level Skeleton UI**: Built modern dashboard loading skeletons (`CardSkeleton`, `TableSkeleton`, `TopologySkeleton`, `SettingsSkeleton`, `ChartSkeleton`) to present placeholders for each data element during initialization.
+* **Previously Loaded Page Caching**: Integrated a routing state tracking mechanism (`visitedPages`) so that once a page has been loaded, its DOM representation remains active and cached in memory when switching between tabs.
+
+### Milestone 10: Operations Visual Loading Feedback
+* **Forced Button Spinners**: Configured simulated 2-second UI transition timers on critical network configuration changes to show persistent spinners for operator actions.
+* **Settings & Refresh Actions**: Added 2-second async timeouts to the Save Configuration, Reset Defaults, and Force Refresh actions in [Settings.jsx](file:///d:/Projects/College/Wireless-Sensor-Network/dashboard/src/components/pages/Settings.jsx) and [Alerts.jsx](file:///d:/Projects/College/Wireless-Sensor-Network/dashboard/src/components/pages/Alerts.jsx), locking button states and running loading spinners (`Loader2`, `RefreshCw`) during that duration.
+
+### Milestone 11: Dual-Model Network Parameter Predictive Pipelines
+* **Model A (Linear Regression Baseline)**: Implemented in [`network_predictor.py`](file:///d:/Projects/College/Wireless-Sensor-Network/src/ml/network_predictor.py) as a baseline training pipeline. Uses static/raw inputs to forecast battery level, network latency, and packet loss rate. Exposes predictions and plots side-by-side performance indicators.
+* **Model B (Gradient Boosting Regressor)**: Designed a high-performance ensemble forecasting pipeline in [`network_predictor_v2.py`](file:///d:/Projects/College/Wireless-Sensor-Network/src/ml/network_predictor_v2.py). Uses engineered temporal feature sets: rolling stats (5-step window means/std-devs), 1-step parameter lags, sequence progress metrics, and elapsed node running times.
+* **Fit Metric Reporting**: Saves models to `models/`, prediction datasets to `predictions/network_predictions/`, and creates comparison reports benchmarked against baseline performances.
+
 ---
 
 ## 4. Technical Challenges Faced & Solutions
@@ -147,6 +161,21 @@ We have successfully completed all Phase 1 software backend pipelines:
 > **Problem**: The ML prediction models and analytics tables read telemetry directly from the unified dataset. However, new incoming sensor metrics were only stored in node-specific files, causing analytics to stay static unless the user manually ran `merge_logs.py`.
 > 
 > **Solution**: Added a `save_to_processed_dataset()` subscriber callback to `backend.py` that maps, standardizes, and appends incoming payloads directly to `data/processed/wsn_dataset.csv` automatically in real time.
+
+### Challenge 8: Tab Shifting Resets and DOM Remounting
+> **Problem**: Dynamically unloading and mounting components on page switches forced Recharts and SVG topologies to recreate themselves, losing user scroll position and causing visible layout flashes on every tab click.
+> 
+> **Solution**: Restructured the page routing under [App.jsx](file:///d:/Projects/College/Wireless-Sensor-Network/dashboard/src/App.jsx). Rather than conditionally unmounting pages (`currentPage === name && <Component />`), we track a list of visited pages and keep them mounted but visually toggled hidden/visible using CSS layout styles, retaining in-memory caches.
+
+### Challenge 9: Instant Backend API Responses Short-circuiting Load States
+> **Problem**: Because local endpoints completed API calls in under 5ms, button transitions and save states flashed in a split second, making operations feel unstable and leaving the user unsure if they clicked.
+> 
+> **Solution**: Wrapped the backend update triggers in Settings and Alerts with a minimum 2-second Promise timeout. This ensures indicators like "Saving..." or "Refreshing..." remain active long enough to convey the processing state before the success notification displays.
+
+### Challenge 10: Non-Linearity and Data Leakage in Time-Series Forecasting
+> **Problem**: Baseline Linear Regression models yielded extremely poor performance (R² scores around ~0.003 for battery decay, and negative R² scores for latency forecasting). This was caused by target data leakage from using current-timestep features to predict other synchronous variables, and the models' inability to map non-linear trends (such as battery wrap-around resets or latency spike fluctuations).
+> 
+> **Solution**: Engineered lagged features (shifted by 1 timestep to prevent leakage), difference change rates, and rolling window standard deviations. Switched models to Gradient Boosting Regressors (`sklearn.ensemble.GradientBoostingRegressor`) and replaced random train-test splitting with a strict chronological (non-shuffled) chronological split (80% train, 20% test). This resolved leakage, yielding high R² accuracy scores (>0.90 for battery).
 
 ---
 
