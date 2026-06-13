@@ -1,9 +1,5 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
-console.log("API URL:", API_BASE_URL);
-console.log(import.meta.env);
-console.log(import.meta.env.VITE_API_URL);
-
 async function fetchFromApi(endpoint, options = {}) {
   try {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, options);
