@@ -1,8 +1,8 @@
 {
     "mqtt": {
-        "broker": "localhost",
+        "broker": "broker.hivemq.com",
         "port": 1883,
-        "base_topic": "wsn"
+        "base_topic": "wsn_ahana_2026"
     },
     "simulation": {
         "data_interval": 60,
@@ -15,7 +15,7 @@
         "rssi_baseline": -60.0,
         "rssi_noise": 3.0,
         "polling_interval": 10,
-        "demo_mode": true
+        "demo_mode": false
     },
     "cities": [
         "Hyderabad",

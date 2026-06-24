@@ -9,9 +9,25 @@ from logging.handlers import RotatingFileHandler
 from utils.fault_detector import FaultDetector
 
 # --- Configuration ---
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+CONFIG_PATH = os.path.join(BASE_DIR, "..", "configs", "settings.json")
+
 BROKER = "localhost"
 PORT = 1883
-TOPIC_FILTER = "wsn/+/+"  # Subscribe to all cities and all message types
+BASE_TOPIC = "wsn"
+
+if os.path.exists(CONFIG_PATH):
+    try:
+        with open(CONFIG_PATH, "r") as f:
+            config = json.load(f)
+            mqtt_config = config.get("mqtt", {})
+            BROKER = mqtt_config.get("broker", BROKER)
+            PORT = mqtt_config.get("port", PORT)
+            BASE_TOPIC = mqtt_config.get("base_topic", BASE_TOPIC)
+    except Exception as e:
+        print(f"Error reading settings.json: {e}")
+
+TOPIC_FILTER = f"{BASE_TOPIC}/+/+"  # Subscribe to all cities and all message types under the configured base topic
 HEALTH_THRESHOLD = 45     # Seconds before a node is marked OFFLINE
 LOG_DIR = os.path.join(os.path.dirname(__file__), "..", "data", "logs")
 
@@ -208,8 +224,8 @@ def flatten_payload(payload):
 def on_message(client, userdata, msg):
     try:
         topic_parts = msg.topic.split('/')
-        city = topic_parts[1]
-        msg_type = topic_parts[2]
+        city = topic_parts[-2]
+        msg_type = topic_parts[-1]
         payload = json.loads(msg.payload.decode())
 
         if msg_type == "status":
