@@ -161,7 +161,8 @@ class SensorNode:
                     success, latency_ms = self.simulate_network_behavior()
                     if success:
                         self.seq_num += 1
-                        status_topic = f"wsn/{self.city}/status"
+                        base_topic = self.config.get('mqtt', {}).get('base_topic', 'wsn')
+                        status_topic = f"{base_topic}/{self.city}/status"
                         status_payload = {
                             "node_id": self.city, 
                             "status": "ONLINE", 
@@ -189,7 +190,8 @@ class SensorNode:
                         self.seq_num += 1
                         data_payload = self.fetch_weather_data(latency_ms)
                         if data_payload:
-                            data_topic = f"wsn/{self.city}/data"
+                            base_topic = self.config.get('mqtt', {}).get('base_topic', 'wsn')
+                            data_topic = f"{base_topic}/{self.city}/data"
                             self.client.publish(data_topic, json.dumps(data_payload))
                             print(f"[{self.city}] Data packet sent successfully (Seq: {self.seq_num}, Latency: {latency_ms}ms, Battery: {round(self.battery_level, 2)}%).")
                     last_data_tx = current_time

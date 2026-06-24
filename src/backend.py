@@ -221,6 +221,13 @@ def flatten_payload(payload):
     flat.update(payload.get('metrics', {}))
     return flat
 
+def on_connect(client, userdata, flags, reason_code, properties=None):
+    if reason_code == 0:
+        logger.info(f"Connected to MQTT Broker successfully. Subscribing to: {TOPIC_FILTER}")
+        client.subscribe(TOPIC_FILTER)
+    else:
+        logger.error(f"MQTT connection failed with reason code: {reason_code}")
+
 def on_message(client, userdata, msg):
     try:
         topic_parts = msg.topic.split('/')
@@ -318,7 +325,15 @@ def save_to_processed_dataset(city, data):
     dataset_row["city"] = city
     dataset_row["anomaly_flag"] = 0 # Default to 0 (normal) for streaming data
     
-    dataset_columns = STANDARD_COLUMNS + ["city", "anomaly_flag"]
+    # Dynamically read header if file exists to support ML scoring columns
+    if file_exists:
+        try:
+            with open(file_path, "r", encoding="utf-8") as f:
+                dataset_columns = f.readline().strip().split(",")
+        except Exception:
+            dataset_columns = STANDARD_COLUMNS + ["city", "anomaly_flag"]
+    else:
+        dataset_columns = STANDARD_COLUMNS + ["city", "anomaly_flag"]
     
     df = pd.DataFrame([dataset_row])
     for col in dataset_columns:
@@ -347,11 +362,11 @@ def start_backend():
     migrate_existing_csvs()
 
     client = mqtt.Client(callback_api_version=mqtt.CallbackAPIVersion.VERSION2)
+    client.on_connect = on_connect
     client.on_message = on_message
     
     try:
         client.connect(BROKER, PORT, 60)
-        client.subscribe(TOPIC_FILTER)
         
         # loop_start runs the MQTT processing in a background thread
         client.loop_start()
