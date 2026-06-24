@@ -35,7 +35,7 @@ The system follows a strict **modularity-first** philosophy. The MQTT topic stru
           ┌────────────────────────────────┼──────────────────────────────┐
           │                                │                              │
           ▼ (Phase 1)                      ▼ (Phase 2)                    ▼ (Phase 3)
-   [ Python Nodes ]                [ PICSimLab Boards ]            [ ESP8266 Hardware ]
+    [ Python Nodes ]             [ Wokwi Boards (Web) ]         [ ESP8266 Hardware ]
           │                                │                              │
           └────────────────────────────────┼──────────────────────────────┘
                                            │
@@ -68,11 +68,11 @@ In this initial phase, the entire platform is constructed using Python-based vir
 *   **Ingestion & Watchdog Backend**: Runs multithreaded subscription scripts writing log files, real-time master datasets, and evaluating node health.
 *   **FastAPI & React Dashboard**: Serves REST gateways and visualizes the network layout with dynamic layout animations.
 
-### Phase 2: PICSimLab Hardware Simulation
-Migrate the software virtual nodes to hardware simulation without altering the rest of the application layers.
+### Phase 2: Wokwi Hardware Simulation
+Migrate the software virtual nodes to hardware simulation using the Wokwi web simulator without altering the rest of the application layers.
 *   The virtual Python nodes are retired.
-*   Firmware written in C/C++ is flashed onto simulated microcontrollers (e.g., PIC18F, ESP32, or Arduino boards) inside the **PICSimLab** emulator.
-*   The simulated boards interact with the local MQTT broker, transmitting equivalent JSON structures on the same communication topics.
+*   Firmware written in C/C++ is run on simulated ESP32 microcontrollers inside the web-based **Wokwi** simulator.
+*   The simulated boards connect to a public MQTT broker (e.g. HiveMQ) over virtual WiFi (`Wokwi-GUEST`), transmitting equivalent JSON structures under a unique topic namespace (`wsn_ahana_2026`).
 
 ### Phase 3: Real Hardware Implementation
 Deploy the validated architecture onto physical hardware nodes in the field.
@@ -503,7 +503,7 @@ We intentionally avoided generic "AI agency templates" characterized by flat sof
 - [x] Custom Loading Skeleton UI Templates
 - [x] Forced Action Spinner Timers
 - [x] Stateless Demo Mode Portfolio Replay Engine
-- [ ] Phase 2 PICSimLab Microcontroller Hardware Simulation
+- `[/]` Phase 2 Wokwi Microcontroller Hardware Simulation
 - [ ] Phase 3 ESP8266/Arduino Physical Node Implementation
 
 ---
@@ -516,7 +516,7 @@ We intentionally avoided generic "AI agency templates" characterized by flat sof
 
 ### Phase 2 Implementation
 *   Refactor Python nodes logic into C/C++ code.
-*   Configure **PICSimLab** simulators with virtual boards, mapping serial writes to Mosquitto broker targets.
+*   Configure **Wokwi** simulators with virtual ESP32 boards and sensors, connected to a public broker under a unique topic namespace.
 
 ### Phase 3 Implementation
 *   Deploy firmware to physical **ESP8266** microcontrollers.
@@ -527,7 +527,7 @@ We intentionally avoided generic "AI agency templates" characterized by flat sof
 ## 15. Development Guidelines
 
 ### Modular Separation
-Do not couple API endpoints to specific hardware definitions. The API reads data from CSV databases; whether these files are populated by virtual Python nodes, PICSimLab simulations, or physical microcontrollers does not matter.
+Do not couple API endpoints to specific hardware definitions. The API reads data from CSV databases; whether these files are populated by virtual Python nodes, Wokwi simulations, or physical microcontrollers does not matter.
 
 ### API Schema Stability
 Any modification to FastAPI paths must maintain backward compatibility with the frontend React routing and state formats.
@@ -608,7 +608,7 @@ If you do not want to run Mosquitto or simulator node processes (for example, fo
 
 *   **Experimental Latency Prediction**: Latency measurements fluctuate due to random network jitter, resulting in higher prediction errors than other variables.
 *   **Synthetic Network Parameters**: Latency, RSSI, and packet loss rates are synthetically generated to supplement real meteorological data.
-*   **PICSimLab & Hardware Integrations**: Simulated and physical hardware integrations are pending Phase 2 and Phase 3 development.
+*   **Wokwi & Hardware Integrations**: Simulated and physical hardware integrations are pending/in progress for Phase 2 and Phase 3 development.
 
 ---
 

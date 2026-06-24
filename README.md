@@ -158,7 +158,7 @@ Developers can prototype, test regression models, and tune alarm thresholds in a
 
 *   **Simulation First**: Validate software interfaces, ML pipelines, and data normalization before physical hardware integration.
 *   **Decoupled Modularity**: Telemetry sources, brokers, database ingestion, APIs, and client UIs exist as independent services.
-*   **Hardware Abstraction**: Node interactions are standardized via common JSON structures sent over MQTT topics. The subscriber backend does not distinguish between a Python virtual process, a PICSimLab simulation, or a physical ESP8266.
+*   **Hardware Abstraction**: Node interactions are standardized via common JSON structures sent over MQTT topics. The subscriber backend does not distinguish between a Python virtual process, a Wokwi simulation, or a physical ESP8266.
 *   **Explainable AI (XAI)**: Prefers deterministic, clear equations for operational metric scoring over black-box ML metrics, ensuring dashboard actions are explainable to operators.
 *   **Frontend/Backend Separation**: Utilizes stateless REST gateways and asynchronous event loops, keeping front-end clients independent of backend database locks.
 
@@ -173,10 +173,10 @@ Developers can prototype, test regression models, and tune alarm thresholds in a
 *   **MQTT Broker**: Connects nodes to a Mosquitto server, routing status heartbeats and telemetry data.
 *   **FastAPI & React**: Exposes clean API endpoints and renders a real-time dark-mode NOC control board.
 
-### Phase 2: PICSimLab Hardware Simulation (Pending)
-*   **Virtual Board Compilation**: Python virtual nodes are replaced with simulated microcontroller boards running inside **PICSimLab**.
-*   **Firmware Porting**: Embedded C/C++ scripts are flashed to simulated microchips (e.g., ESP32, PIC18F, or Arduino boards) mapping sensors to MQTT client libraries.
-*   **Infrastructure Reuse**: Continues to route payloads to the same Mosquitto MQTT broker, Python backend subscriber, and React dashboard without code modifications.
+### Phase 2: Wokwi Web-based Hardware Simulation (In Progress)
+*   **Virtual Board Compilation**: Python virtual nodes are replaced with simulated ESP32 microcontroller boards running inside **Wokwi**'s browser environment.
+*   **Firmware Porting**: Embedded C/C++ scripts are executed on simulated microchips, establishing virtual WiFi (`Wokwi-GUEST`) links to connect directly to the MQTT client.
+*   **Infrastructure Reuse**: Telemetry payloads are published to a public broker (`broker.hivemq.com`) under a unique namespace (`wsn_ahana_2026`). The Python backend subscriber, FastAPI server, and React dashboard ingest the data seamlessly.
 
 ### Phase 3: Real Hardware Deployment (Future)
 *   **Physical Deployment**: Firmware is flashed onto physical **ESP8266** or **ESP32** microcontroller chips.
@@ -395,7 +395,7 @@ Wireless-Sensor-Network/
 *   **Data Source**: OpenWeather API
 *   **Frontend**: React, Vite, Tailwind CSS v4, Recharts, Lucide React
 *   **Machine Learning**: scikit-learn, joblib, matplotlib, numpy
-*   **Hardware Simulation**: PICSimLab *(Phase 2)*
+*   **Hardware Simulation**: Wokwi *(Phase 2)*
 *   **Future Hardware**: ESP8266 / Arduino / BMP280 sensors *(Phase 3)*
 
 ---
@@ -507,10 +507,10 @@ Standard Active Simulation Workflow:
 Phase 1: Software Simulation Core
 ██████████████████████████████████████████████ 100%
 
-Phase 2: PICSimLab Virtual Hardware Simulator
-░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 0%
+Phase 2: Wokwi Virtual Hardware Simulator
+████████████████████████████████████████░░░░░ 80%
 
-Phase 3: Real ESP8266 Microchip Deployment
+Phase 3: Real ESP8266/ESP32 Microchip Deployment
 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 0%
 ```
 
@@ -518,7 +518,7 @@ Phase 3: Real ESP8266 Microchip Deployment
 
 ## 14. Future Work
 
-*   **PICSimLab Virtual Board Firmware**: Refactor Python nodes logic into C/C++ scripts for simulated microcontrollers.
+*   **Wokwi Virtual Board Firmware**: Refactor Python nodes logic into C/C++ scripts for simulated microcontrollers and integrate virtual physical sensors (DHT22/BMP280).
 *   **WebSockets Ingestion Routing**: Replace REST polling with WebSockets for real-time dashboard updates.
 
 ---

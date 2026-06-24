@@ -73,18 +73,18 @@ For public deployments or quick testing without active simulator processes (such
 
 ---
 
-# Data Flow Architecture (Phase 2: PICSimLab Hardware Simulation)
+# Data Flow Architecture (Phase 2: Wokwi Web-based Hardware Simulation)
 
 ```text
 +----------------------+
-|   PICSimLab Nodes    |  ==> (Virtual hardware board, simulated ESP32/ESP8266)
+|   Wokwi ESP32 Node   |  ==> (Virtual hardware board, simulated ESP32 running C++)
 |  (Simulated Board)   |
 +----------------------+
             │
-            │  MQTT (wsn/{city}/status, wsn/{city}/data)
+            │  MQTT (wsn_ahana_2026/{city}/status, wsn_ahana_2026/{city}/data)
             ▼
 +----------------------+
-|    MQTT Broker       |
+| Public MQTT Broker   |  ==> (broker.hivemq.com)
 +----------------------+
             │
             │  paho-mqtt
@@ -116,10 +116,10 @@ For public deployments or quick testing without active simulator processes (such
 |   (Real Hardware)    |
 +----------------------+
             │
-            │  MQTT (wsn/{city}/status, wsn/{city}/data)
+            │  MQTT (wsn_ahana_2026/{city}/status, wsn_ahana_2026/{city}/data)
             ▼
 +----------------------+
-|    MQTT Broker       |
+| Public/Local Broker  |
 +----------------------+
             │
             │  paho-mqtt
@@ -148,10 +148,13 @@ For public deployments or quick testing without active simulator processes (such
 ```text
 Phase 1: Python Virtual Nodes ────┐
                                    │
-Phase 2: PICSimLab Hardware ───────┼─► [MQTT Broker] ─► [Backend API] ─► [React Dashboard]
+Phase 2: Wokwi Web Simulation ─────┼─► [MQTT Broker] ─► [Backend API] ─► [React Dashboard]
                                    │
 Phase 3: Physical ESP8266 Node ────┘
 ```
+
+> [!NOTE]
+> **Architectural Pivot (PICSimLab to Wokwi)**: Phase 2 was originally designed using the PICSimLab emulator. Due to Windows-specific virtual serial port conflicts (COM port sharing limits between the bridge and terminal monitor) and QEMU's WiFi connection scanning limitations, the architecture was upgraded to Wokwi. Wokwi provides true browser-based WiFi emulation (connecting to the virtual `Wokwi-GUEST` network) allowing simulated ESP32 chips running standard C++ firmware to connect directly to a public MQTT broker (`broker.hivemq.com`) under a unique namespace (`wsn_ahana_2026`). This ensures zero local driver installations and 100% code portability to real hardware.
 
 The underlying network communication model, backend processors, API services, and frontend visualization structures remain completely **unchanged** throughout. Only the telemetry source evolves.
 
