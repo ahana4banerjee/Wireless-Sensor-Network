@@ -1,6 +1,9 @@
 #include <WiFi.h>
 #include <PubSubClient.h>
 #include <ArduinoJson.h>
+#include <DHT.h>
+#include <Wire.h>
+#include <Adafruit_BMP085.h>
 
 // --- Configuration Parameters ---
 const char* city = "Bangalore";  // Change to Delhi, Mumbai, Hyderabad, or Secunderabad as needed
@@ -14,14 +17,23 @@ const char* password = "";
 const char* mqtt_broker = "broker.hivemq.com";
 const int mqtt_port = 1883;
 
+// Pin Definitions
+#define DHTPIN 4
+#define DHTTYPE DHT22
+#define BMP_SDA 21
+#define BMP_SCL 22
+#define LED_PIN 2
+
+// Sensor Instances
+DHT dht(DHTPIN, DHTTYPE);
+Adafruit_BMP085 bmp; // I2C instance for BMP180
+
 // WSN Simulation Parameters
 float battery_level = 100.00;
 float rssi_baseline = -60.00;
 float rssi_noise    = 3.00;
 float packet_loss_rate = 0.05; // 5% packet loss
 float max_delay_ms  = 1500.00;
-
-#define LED_PIN 2
 
 // Global clients
 WiFiClient espClient;
@@ -123,8 +135,20 @@ void setup() {
     digitalWrite(LED_PIN, HIGH); // LED ON indicates active firmware execution
 
     Serial.begin(115200);
-    setup_wifi();
     
+    // Initialize DHT22
+    dht.begin();
+    Serial.println("[HARDWARE] DHT22 Initialized.");
+
+    // Initialize I2C and BMP180
+    Wire.begin(BMP_SDA, BMP_SCL);
+    if (bmp.begin()) {
+        Serial.println("[HARDWARE] BMP180 Initialized successfully.");
+    } else {
+        Serial.println("[HARDWARE ERROR] BMP180 initialization failed! Checking connections.");
+    }
+
+    setup_wifi();
     client.setServer(mqtt_broker, mqtt_port);
 
     // Build dynamic topic strings
@@ -132,7 +156,7 @@ void setup() {
     data_topic = String(base_topic) + "/" + String(city) + "/data";
 
     Serial.println("=========================================");
-    Serial.print(" WSN ESP32 Wokwi Node: ");
+    Serial.print(" WSN ESP32 Wokwi Node (Day 3): ");
     Serial.println(city);
     Serial.print(" Status Topic: ");
     Serial.println(status_topic);
@@ -163,8 +187,10 @@ void loop() {
             // Create JSON status Document
             StaticJsonDocument<256> doc;
             doc["node_id"] = city;
+            doc["city"] = city;
             doc["status"] = "ONLINE";
-            doc["ts"] = time(NULL) > 100000 ? time(NULL) : (millis() / 1000.0);
+            doc["timestamp"] = time(NULL) > 100000 ? time(NULL) : (millis() / 1000.0);
+            doc["ts"] = doc["timestamp"];
             doc["seq_num"] = seqNum;
 
             JsonObject metrics = doc.createNestedObject("metrics");
@@ -179,7 +205,7 @@ void loop() {
             
             // Publish directly over MQTT
             if (client.publish(status_topic.c_str(), buffer)) {
-                Serial.print("[MQTT PUBLISHED] Topic: ");
+                Serial.print("[MQTT PUBLISHED] Status Topic: ");
                 Serial.print(status_topic);
                 Serial.print(" | Payload: ");
                 Serial.println(buffer);
@@ -200,25 +226,58 @@ void loop() {
         if (simulate_network_behavior(&latency)) {
             seqNum++;
 
+            // Read sensors with fallback checks
+            float tempVal = dht.readTemperature();
+            float humVal = dht.readHumidity();
+            if (isnan(tempVal) || isnan(humVal)) {
+                Serial.println("[SENSOR WARNING] DHT22 read failure. Using simulated defaults.");
+                tempVal = 28.5 + (random(-20, 20) / 10.0);
+                humVal = 55.0 + random(-5, 5);
+            }
+
+            float pressVal = bmp.readPressure() / 100.0F; // Pa to hPa
+            if (isnan(pressVal) || pressVal < 300.0) {
+                Serial.println("[SENSOR WARNING] BMP180 read failure. Using simulated defaults.");
+                pressVal = 1012.0 + random(-2, 2);
+            }
+
             // Create JSON data Document
             StaticJsonDocument<512> doc;
             doc["node_id"] = city;
-            doc["ts"] = time(NULL) > 100000 ? time(NULL) : (millis() / 1000.0);
+            doc["city"] = city;
+            doc["timestamp"] = time(NULL) > 100000 ? time(NULL) : (millis() / 1000.0);
+            doc["ts"] = doc["timestamp"];
             doc["seq_num"] = seqNum;
 
+            // Direct properties requested by the user
+            doc["temperature"] = round(tempVal * 100.0) / 100.0;
+            doc["humidity"] = round(humVal * 100.0) / 100.0;
+            doc["pressure"] = round(pressVal * 100.0) / 100.0;
+            doc["battery_level"] = round(battery_level * 100.0) / 100.0;
+            doc["signal_strength"] = get_signal_strength();
+            doc["latency_ms"] = latency;
+
+            // Nested metrics for backend compatibility
             JsonObject metrics = doc.createNestedObject("metrics");
-            float tempVal = 28.5 + (random(-20, 20) / 10.0); // Simulated temperature fluctuations
-            metrics["temp"] = tempVal;
-            metrics["feels_like"] = tempVal + 1.0;
-            metrics["humidity"] = 55.0 + random(-5, 5);
-            metrics["pressure"] = 1012 + random(-2, 2);
+            metrics["temp"] = doc["temperature"];
+            metrics["feels_like"] = round((tempVal + 1.0) * 100.0) / 100.0;
+            metrics["humidity"] = doc["humidity"];
+            metrics["pressure"] = doc["pressure"];
             metrics["wind_speed"] = 3.20;
             metrics["visibility"] = 10000;
-            metrics["battery_level"] = round(battery_level * 100.0) / 100.0;
-            metrics["signal_strength"] = get_signal_strength();
-            metrics["latency_ms"] = latency;
+            metrics["battery_level"] = doc["battery_level"];
+            metrics["signal_strength"] = doc["signal_strength"];
+            metrics["latency_ms"] = doc["latency_ms"];
             metrics["seq_num"] = seqNum;
-            doc["condition"] = "Clear";
+            
+            // Derive atmospheric condition based on pressure and humidity
+            if (pressVal < 1008.0) {
+                doc["condition"] = "Rain";
+            } else if (humVal > 75.0) {
+                doc["condition"] = "Clouds";
+            } else {
+                doc["condition"] = "Clear";
+            }
 
             // Serialize payload to buffer
             char buffer[512];
@@ -226,7 +285,7 @@ void loop() {
 
             // Publish directly over MQTT
             if (client.publish(data_topic.c_str(), buffer)) {
-                Serial.print("[MQTT PUBLISHED] Topic: ");
+                Serial.print("[MQTT PUBLISHED] Data Topic: ");
                 Serial.print(data_topic);
                 Serial.print(" | Payload: ");
                 Serial.println(buffer);

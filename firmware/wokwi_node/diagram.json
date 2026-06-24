@@ -1,13 +1,24 @@
 {
   "version": 1,
-  "author": "Antigravity",
+  "author": "Ahana Banerjee",
   "editor": "wokwi",
   "parts": [
-    { "type": "board-esp32-devkitc-v4", "id": "esp", "top": 0, "left": 0, "attrs": {} }
+    { "type": "board-esp32-devkit-c-v4", "id": "esp", "top": 0, "left": 0, "attrs": {} },
+    { "type": "wokwi-dht22", "id": "dht1", "top": -150, "left": -120, "attrs": {} },
+    { "type": "board-bmp180", "id": "bmp1", "top": -150, "left": 100, "attrs": {} }
   ],
   "connections": [
     [ "esp:TX", "$serialMonitor:RX", "", [] ],
-    [ "esp:RX", "$serialMonitor:TX", "", [] ]
+    [ "esp:RX", "$serialMonitor:TX", "", [] ],
+    
+    [ "esp:GND.1", "dht1:GND", "black", [ "h0" ] ],
+    [ "esp:3V3", "dht1:VCC", "red", [ "h0" ] ],
+    [ "esp:4", "dht1:SDA", "green", [ "h0" ] ],
+    
+    [ "esp:GND.2", "bmp1:GND", "black", [ "h0" ] ],
+    [ "esp:3V3", "bmp1:VCC", "red", [ "h0" ] ],
+    [ "esp:21", "bmp1:SDA", "blue", [ "h0" ] ],
+    [ "esp:22", "bmp1:SCL", "yellow", [ "h0" ] ]
   ],
   "dependencies": {}
 }
