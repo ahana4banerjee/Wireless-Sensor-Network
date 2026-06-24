@@ -151,6 +151,8 @@ void setup() {
 
     setup_wifi();
     client.setServer(mqtt_broker, mqtt_port);
+    client.setBufferSize(512);
+
 
     // Build dynamic topic strings
     status_topic = String(base_topic) + "/" + String(city) + "/status";
