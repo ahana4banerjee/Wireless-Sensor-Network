@@ -7,7 +7,7 @@ This document establishes the 7-day execution plan for **Phase 2 (Virtual Embedd
 ## 📅 Roadmap Overview
 
 ```text
-  Day 1 (Done) ──► Day 2 (Done) ──► Day 3 (Done) ──► Day 4 (Done) ──► Day 5 (Done) ──► Day 6        ──► Day 7
+  Day 1 (Done) ──► Day 2 (Done) ──► Day 3 (Done) ──► Day 4 (Done) ──► Day 5 (Done) ──► Day 6 (Done) ──► Day 7
   Bootstrapping    WiFi & Broker    Sensors (DHT)    NTP Time Sync   5-Node Grid      Failure Model    Final Sign-off
 ```
 
@@ -18,7 +18,7 @@ This document establishes the 7-day execution plan for **Phase 2 (Virtual Embedd
 | **Day 3** | Sensor Integration (DHT22 & BMP280) | **Completed** | `wokwi_node.ino`, `diagram.json` |
 | **Day 4** | Network Time Protocol (NTP) Sync | **Completed** | `wokwi_node.ino` |
 | **Day 5** | Multi-Node Grid Orchestration | **Completed** | Wokwi Tab Orchestrations |
-| **Day 6** | System Robustness & Failure Modeling | *Scheduled* | `settings.json`, `backend.py` |
+| **Day 6** | System Robustness & Failure Modeling | **Completed** | `settings.json`, `backend.py` |
 | **Day 7** | PlatformIO Sync & Phase 3 Roadmap | *Scheduled* | `esp32_wsn_node/src/main.cpp`, `platformio.ini` |
 
 ---
