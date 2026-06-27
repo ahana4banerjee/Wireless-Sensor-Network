@@ -15,7 +15,7 @@
         "rssi_baseline": -60.0,
         "rssi_noise": 3.0,
         "polling_interval": 10,
-        "demo_mode": false
+        "demo_mode": true
     },
     "cities": [
         "Hyderabad",
