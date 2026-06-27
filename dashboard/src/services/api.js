@@ -50,6 +50,10 @@ export const wsnApi = {
   getModelsCurrent: () => fetchFromApi("/api/models/current"),
   getModelsHistory: () => fetchFromApi("/api/models/history"),
   getModelsStatus: () => fetchFromApi("/api/models/status"),
+  // Digital Twins
+  getTwins: () => fetchFromApi("/api/twins"),
+  getTwinsSummary: () => fetchFromApi("/api/twins/summary"),
+  getTwin: (nodeId) => fetchFromApi(`/api/twins/${encodeURIComponent(nodeId)}`),
 };
 
 export const EXPORT_URLS = {
