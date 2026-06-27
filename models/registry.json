@@ -1,0 +1,164 @@
+{
+    "temp_model": {
+        "active_version": "v1",
+        "history": [
+            {
+                "version": "v1",
+                "filename": "temp_model_v1.pkl",
+                "created_time": "2026-06-27T18:45:58Z",
+                "dataset_size": 2433,
+                "metrics": {
+                    "MAE": 2.6366466892681615,
+                    "RMSE": 3.1870162652968883,
+                    "R2": -0.000956054546990659
+                },
+                "algorithm": "LinearRegression",
+                "status": "active"
+            }
+        ]
+    },
+    "humidity_model": {
+        "active_version": "v1",
+        "history": [
+            {
+                "version": "v1",
+                "filename": "humidity_model_v1.pkl",
+                "created_time": "2026-06-27T18:45:58Z",
+                "dataset_size": 2433,
+                "metrics": {
+                    "MAE": 12.110642571322083,
+                    "RMSE": 14.56279428559073,
+                    "R2": -8.19759447079349e-06
+                },
+                "algorithm": "LinearRegression",
+                "status": "active"
+            }
+        ]
+    },
+    "battery_model": {
+        "active_version": "v1",
+        "history": [
+            {
+                "version": "v1",
+                "filename": "battery_model_v1.pkl",
+                "created_time": "2026-06-27T18:45:58Z",
+                "dataset_size": 2433,
+                "metrics": {
+                    "MAE": 24.944773961047215,
+                    "RMSE": 28.58813619927742,
+                    "R2": -0.0005228820773413023
+                },
+                "algorithm": "LinearRegression",
+                "status": "active"
+            }
+        ]
+    },
+    "latency_model": {
+        "active_version": "v1",
+        "history": [
+            {
+                "version": "v1",
+                "filename": "latency_model_v1.pkl",
+                "created_time": "2026-06-27T18:45:58Z",
+                "dataset_size": 2433,
+                "metrics": {
+                    "MAE": 233.22095258113364,
+                    "RMSE": 294.6455913744878,
+                    "R2": -4.336577118957408e-06
+                },
+                "algorithm": "LinearRegression",
+                "status": "active"
+            }
+        ]
+    },
+    "packet_loss_model": {
+        "active_version": "v1",
+        "history": [
+            {
+                "version": "v1",
+                "filename": "packet_loss_model_v1.pkl",
+                "created_time": "2026-06-27T18:45:58Z",
+                "dataset_size": 2433,
+                "metrics": {
+                    "MAE": 0.9553604356324225,
+                    "RMSE": 1.31696938423018,
+                    "R2": -0.02564558096033842
+                },
+                "algorithm": "LinearRegression",
+                "status": "active"
+            }
+        ]
+    },
+    "gb_battery_model": {
+        "active_version": "v1",
+        "history": [
+            {
+                "version": "v1",
+                "filename": "gb_battery_model_v1.pkl",
+                "created_time": "2026-06-27T18:46:00Z",
+                "dataset_size": 2433,
+                "metrics": {
+                    "MAE": 1.0776885662898394,
+                    "RMSE": 6.940724163999551,
+                    "R2": 0.9400490947764596
+                },
+                "algorithm": "GradientBoostingRegressor",
+                "status": "active"
+            }
+        ]
+    },
+    "gb_latency_model": {
+        "active_version": "v1",
+        "history": [
+            {
+                "version": "v1",
+                "filename": "gb_latency_model_v1.pkl",
+                "created_time": "2026-06-27T18:46:01Z",
+                "dataset_size": 2433,
+                "metrics": {
+                    "MAE": 219.74754644315752,
+                    "RMSE": 274.38062021027605,
+                    "R2": 0.018811415405988408
+                },
+                "algorithm": "GradientBoostingRegressor",
+                "status": "active"
+            }
+        ]
+    },
+    "gb_packet_loss_model": {
+        "active_version": "v1",
+        "history": [
+            {
+                "version": "v1",
+                "filename": "gb_packet_loss_model_v1.pkl",
+                "created_time": "2026-06-27T18:46:02Z",
+                "dataset_size": 2433,
+                "metrics": {
+                    "MAE": 0.18943879263868682,
+                    "RMSE": 0.9639864904644876,
+                    "R2": 0.3414605620098631
+                },
+                "algorithm": "GradientBoostingRegressor",
+                "status": "active"
+            }
+        ]
+    },
+    "anomaly_model": {
+        "active_version": "v1",
+        "history": [
+            {
+                "version": "v1",
+                "filename": "anomaly_model_v1.pkl",
+                "created_time": "2026-06-27T18:46:02Z",
+                "dataset_size": 2433,
+                "metrics": {
+                    "MAE": 0.0,
+                    "RMSE": 0.0,
+                    "R2": 0.09712472880646572
+                },
+                "algorithm": "IsolationForest",
+                "status": "active"
+            }
+        ]
+    }
+}
