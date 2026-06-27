@@ -26,34 +26,54 @@ def save_node_registry(registry):
     except Exception as e:
         logger.error(f"Failed to write nodes_registry.json: {e}")
 
-def resolve_node_id(node_id_or_city):
+def resolve_node_id(node_id_or_mac):
     """
-    Maps a node_id to its registered location (city).
+    Maps a node_id or MAC address to its registered location (city).
     Falls back to the input string itself if not found in the registry (backward compatibility).
     """
+    if not node_id_or_mac:
+        return node_id_or_mac
+        
     registry = load_node_registry()
-    if node_id_or_city in registry:
-        return registry[node_id_or_city].get("location", node_id_or_city)
     
-    # Check if the input is already a registered location/city
+    # Clean input if it's a MAC address (lowercase and strip colons)
+    clean_input = node_id_or_mac.strip().lower().replace(":", "")
+    
+    # 1. Match by key (node_id)
+    if node_id_or_mac in registry:
+        return registry[node_id_or_mac].get("location", node_id_or_mac)
+        
+    # 2. Match by mac_address
     for node_info in registry.values():
-        if node_info.get("location") == node_id_or_city:
-            return node_id_or_city
+        node_mac = node_info.get("mac_address", "")
+        if node_mac:
+            clean_mac = node_mac.strip().lower().replace(":", "")
+            if clean_mac == clean_input:
+                return node_info.get("location")
+                
+    # 3. Match by location itself
+    for node_info in registry.values():
+        if node_info.get("location") == node_id_or_mac:
+            return node_id_or_mac
             
-    return node_id_or_city
+    return node_id_or_mac
 
-def update_node_last_seen(node_id_or_city, timestamp):
+def update_node_last_seen(node_id_or_mac, timestamp):
     registry = load_node_registry()
     updated = False
     
+    clean_input = node_id_or_mac.strip().lower().replace(":", "")
+    
     # Try finding by key (node_id)
-    if node_id_or_city in registry:
-        registry[node_id_or_city]["last_seen"] = timestamp
+    if node_id_or_mac in registry:
+        registry[node_id_or_mac]["last_seen"] = timestamp
         updated = True
     else:
-        # Try finding by location (city)
+        # Try finding by mac_address or location
         for nid, node_info in registry.items():
-            if node_info.get("location") == node_id_or_city:
+            node_mac = node_info.get("mac_address", "")
+            clean_mac = node_mac.strip().lower().replace(":", "") if node_mac else ""
+            if clean_mac == clean_input or node_info.get("location") == node_id_or_mac:
                 registry[nid]["last_seen"] = timestamp
                 updated = True
                 break
