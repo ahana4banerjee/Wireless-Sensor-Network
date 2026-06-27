@@ -232,11 +232,13 @@ export default function MLOps() {
   const [current, setCurrent] = useState(null);
   const [history, setHistory] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError]     = useState(null);
   const [lastFetch, setLastFetch] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState('All');
 
-  const fetchAll = useCallback(async () => {
+  const fetchAll = useCallback(async (showSkeletons = false) => {
+    if (showSkeletons) setLoading(true);
     try {
       const [statusRes, currentRes, historyRes] = await Promise.all([
         wsnApi.getModelsStatus(),
@@ -255,11 +257,20 @@ export default function MLOps() {
     }
   }, []);
 
+  const handleForceRefresh = () => {
+    setRefreshing(true);
+    const minDelay = new Promise(resolve => setTimeout(resolve, 2000));
+    const fetch = fetchAll(true);
+    Promise.all([fetch, minDelay]).finally(() => setRefreshing(false));
+  };
+
   useEffect(() => {
-    fetchAll();
-    const id = setInterval(fetchAll, 30000);
+    fetchAll(true);
+    const id = setInterval(() => fetchAll(false), 30000);
     return () => clearInterval(id);
   }, [fetchAll]);
+
+  const isAnyLoading = loading || refreshing;
 
   // Derived values
   const totalModels    = current ? Object.keys(current).length : 0;
@@ -296,11 +307,15 @@ export default function MLOps() {
             <span className="text-xs text-slate-600">Updated {lastFetch}</span>
           )}
           <button
-            onClick={() => { setLoading(true); fetchAll(); }}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs font-semibold text-slate-300 hover:bg-slate-800 hover:text-white transition-all"
+            onClick={handleForceRefresh}
+            disabled={isAnyLoading}
+            style={{ minWidth: '140px' }}
+            className={`flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs font-bold text-slate-300 hover:bg-slate-800 hover:text-white transition-all cursor-pointer ${
+              isAnyLoading ? 'opacity-65 cursor-not-allowed' : ''
+            }`}
           >
-            <RefreshCw className="w-3.5 h-3.5" />
-            Refresh
+            <RefreshCw className={`w-3.5 h-3.5 ${isAnyLoading ? 'animate-spin' : ''}`} />
+            {isAnyLoading ? 'Refreshing...' : 'Force Refresh'}
           </button>
         </div>
       </div>
@@ -315,7 +330,7 @@ export default function MLOps() {
 
       {/* ── Overview stat cards ─── */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {loading ? (
+        {isAnyLoading ? (
           [...Array(4)].map((_, i) => <CardSkeleton key={i} />)
         ) : (
           <>
@@ -360,7 +375,7 @@ export default function MLOps() {
             Both conditions must be met simultaneously
           </span>
         </div>
-        {loading ? (
+        {isAnyLoading ? (
           <div className="flex flex-col gap-4 animate-pulse">
             <div className="h-8 bg-slate-900 rounded-xl" />
             <div className="h-8 bg-slate-900 rounded-xl" />
@@ -381,7 +396,7 @@ export default function MLOps() {
             />
           </div>
         )}
-        {!loading && triggers.retrain_ready && (
+        {!isAnyLoading && triggers.retrain_ready && (
           <div className="flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/30 rounded-xl px-4 py-2.5 text-xs font-semibold text-emerald-400">
             <CheckCircle className="w-3.5 h-3.5" />
             Both conditions satisfied — Training Manager will trigger a retrain cycle on next check.
@@ -414,7 +429,7 @@ export default function MLOps() {
           </div>
         </div>
 
-        {loading ? (
+        {isAnyLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {[...Array(4)].map((_, i) => <ModelCardSkeleton key={i} />)}
           </div>
@@ -436,12 +451,12 @@ export default function MLOps() {
         <div className="flex items-center gap-3 px-6 py-4 border-b border-slate-900">
           <BarChart2 className="w-4 h-4 text-violet-400" />
           <h3 className="text-sm font-bold text-white">Training History</h3>
-          {!loading && history && (
+          {!isAnyLoading && history && (
             <span className="ml-auto text-xs text-slate-600">{history.length} runs total</span>
           )}
         </div>
 
-        {loading ? (
+        {isAnyLoading ? (
           <div className="p-6">
             <TableSkeleton rows={8} />
           </div>
