@@ -144,23 +144,23 @@ Developers can prototype, test regression models, and tune alarm thresholds in a
 
 ## 5. System Architecture
 
-The architecture routes meteorological payloads and network diagnostics parameters from sensor nodes through local brokers to REST services and client dashboards.
+The architecture routes meteorological payloads and network diagnostics parameters from simulated or physical sensor nodes through MQTT brokers to local file databases, digital twins, REST services, and client dashboards.
 
 ### Architecture Layout Diagram
 ```text
-  [ OpenWeather API ]
-          │
-          ▼ (diurnal baseline metrics)
-  [ Virtual Sensor Nodes ]  ◄── (Simulates battery decay, RSSI noise, latency spikes, packet loss)
-  (Delhi, Hyd, Mum, Blr, Sec)
-          │
-          ▼  MQTT Topics (wsn/{city}/data & wsn/{city}/status) over Port 1883
-  [ Mosquitto Broker ]
-          │
-          ▼
+  [ DHT22 / BMP180 Sensors ]
+              │
+              ▼ (Generic C++ Firmware on ESP32)
+  [ Simulated or Physical Nodes ]  ◄── (Dynamic eFuse MAC Address Resolution)
+              │
+              ▼ MQTT Topics (wsn_ahana_2026/<node_id>/data & /status) over Port 1883
+  [ Public MQTT Broker ] (broker.hivemq.com)
+              │
+              ▼
   [ Python Subscriber Backend ]
           ├── Ingestion Subscriber  ──► [ Node CSV Files & Rotating Logs ]
           ├── Master Dataset Merger ──► [ data/processed/wsn_dataset.csv ]
+          ├── Digital Twin Manager  ──► [ data/twins/twins_state.json ] (Atomic file-bridge)
           ├── Stateful Watchdog     ──► [ Check-in timers & offline flag alerts ]
           └── Fault Diagnostics     ──► [ Alert transitions logged to alerts.log ]
                   │
@@ -168,23 +168,24 @@ The architecture routes meteorological payloads and network diagnostics paramete
   [ Machine Learning & Analytics ]
           ├── Unsupervised Anomalies (Isolation Forest)
           ├── Environmental Predictions (Linear Regression Temp/Humidity)
-          └── Network Parameters Predictions (Linear Regression vs Gradient Boosting)
+          ├── Network Parameters Predictions (Linear Regression vs Gradient Boosting)
+          └── Continuous Retraining  ──► [ training_manager.py ] (Validation-gated daemon)
                   │
                   ▼
-  [ FastAPI REST Server Gateway ] ◄── (Pydantic models & dynamic CORS mappings)
+  [ FastAPI REST Server Gateway ] ◄── (Exposes telemetry, digital twins, & models endpoints)
           │
           ▼
-  [ React WSN Control Room Dashboard ] (Mission Control NOC layout)
+  [ React WSN Control Room Dashboard ] (Mission Control topology + ML Operations view)
 ```
 
 ### Architectural Layer Explanations
-1.  **Meteorological Seed Layer**: The nodes query the OpenWeather API dynamically on a configurable cycle, utilizing latitude and longitude constants to seed baseline ambient metrics.
-2.  **Virtual Telemetry Nodes**: Combines environmental data with generated hardware constraints (battery decay based on active states, RSSI signal noise, and normal latency spikes).
-3.  **Communication Layer (MQTT)**: Routes heartbeat packets over `wsn/{city}/status` and full data records over `wsn/{city}/data` via Mosquitto.
-4.  **Ingestion & In-Memory Logic Layer**: Written in [`backend.py`](file:///d:/Projects/College/Wireless-Sensor-Network/src/backend.py). Implements multithreaded subscription clients, rotates logging handlers, updates real-time CSV rows, and handles node timeouts.
-5.  **Analytics Layer**: Runs offline model training scripts, saving regression estimators to `models/` and anomaly audits to `data/processed/`.
-6.  **REST API Layer (FastAPI)**: Serves clean Pydantic routes, handles input validations, and maps CORS headers for Vite clients.
-7.  **Client Dashboard**: React SPA rendering interactive topology components, time-series graphs, and alarm registers.
+1.  **Telemetry Source Layer**: Physical or virtual nodes publishing JSON packets containing sensor values and network metrics (battery, RSSI, latency). Supports MAC-based automatic identity resolution.
+2.  **Communication Layer (MQTT)**: Routes heartbeat packets over `wsn_ahana_2026/<node_id>/status` and full data records over `wsn_ahana_2026/<node_id>/data` via `broker.hivemq.com`.
+3.  **Ingestion & Watchdog Layer**: Written in [`backend.py`](file:///d:/Projects/College/Wireless-Sensor-Network/src/backend.py). Implements multithreaded subscription clients, rotates logging handlers, updates real-time CSV rows, handles node timeouts, and pushes state changes to the **Digital Twin Manager**.
+4.  **Digital Twin Manager**: Maintained in `src/utils/digital_twin_manager.py`. Persists a thread-safe software representation of each node inside `data/twins/twins_state.json` via atomic swaps, allowing decoupled processes (backend and API) to share states.
+5.  **Analytics & Retraining Layer**: Runs `src/ml/training_manager.py` as a daemon process. Evaluates retraining conditions dynamically and performs validation-gated candidate-to-champion promotions. Saves regression estimators to `models/` and anomaly audits to `data/processed/`.
+6.  **REST API Layer (FastAPI)**: Serves clean Pydantic routes, handles input validations, and maps CORS headers for Vite clients. Exposes twins and model-monitoring endpoints.
+7.  **Client Dashboard**: React SPA rendering interactive topology components, time-series graphs, alarm registers, and the **ML Operations** page.
 
 ### Portfolio Demo Mode Replay Flow
 For production staging or public portfolio deployments where active background services (like MQTT brokers, Python node simulators, and OpenWeather APIs) cannot run continuously, the backend implements a stateless **Demo Mode Replay Engine** in [`demo.py`](file:///d:/Projects/College/Wireless-Sensor-Network/src/api/demo.py).
@@ -310,50 +311,57 @@ The dashboard operates as a premium dark-mode control room. Its interface design
 
 ```text
 Wireless-Sensor-Network/
-├── configs/                     # Config files (settings.json parameters)
-├── dashboard/                   # React frontend application
+├── configs/                     # Central configurations
+│   ├── settings.json            # Dynamic simulation parameters
+│   └── nodes_registry.json      # Node Registry mapping MACs to locations
+├── dashboard/                   # React frontend application (Vite SPA)
 │   ├── dist/                    # Compiled production assets
 │   ├── public/                  # Static assets
 │   └── src/                     # React source directory
 │       ├── components/          # Reusable UI components
-│       │   ├── pages/           # Page views (Overview, Analytics, Predictions, etc.)
-│       │   └── ui/              # Global UI elements & Skeletons.jsx
-│       ├── services/            # API services (api.js methods)
-│       └── App.jsx              # Main routing and dynamic lazy-loading
-├── data/                        # Project storage directory
-│   ├── logs/                    # Rotating log files (backend.log & alerts.log)
-│   └── processed/               # Aggregated database records (wsn_dataset.csv)
-├── models/                      # Pickled ML models (.pkl files)
+│       │   ├── pages/           # Page views (Overview, Analytics, Predictions, MLOps, Alerts, Settings, Export)
+│       │   └── ui/              # Skeletons.jsx loaders
+│       ├── services/            # API services client (api.js methods)
+│       └── App.jsx              # Main routing & cache layer
+├── data/                        # Local file database
+│   ├── logs/                    # Rotating log files (backend.log, alerts.log, training.log)
+│   ├── processed/               # Aggregated database records (wsn_dataset.csv)
+│   └── twins/                   # Digital Twin shared state persistence
+│       └── twins_state.json     # Decoupled state file
+├── models/                      # ML models and logs
+│   ├── registry.json            # Model tracking & version history metrics
+│   └── *.pkl                    # Pickled ML models (.pkl files)
 ├── plots/                       # Model evaluations comparison plots
 ├── predictions/                 # Exported forecasts logs
-├── reports/                     # Model metrics reports and analytics summaries
-├── scratch/                     # Temporary and verification scripts
-│   ├── test_demo_mode.py        # Demo Mode verification script
-│   └── test_settings_api.py     # Settings schema and bounds check script
-├── src/                         # Backend Python scripts
-│   ├── api/                     # FastAPI routing and controller logic
-│   │   ├── routes/              # Sub-routers for nodes, settings, etc.
-│   │   ├── demo.py              # Stateless portfolio demo replay engine
-│   │   ├── schemas.py           # Pydantic data validation models
-│   │   └── main.py              # API server entrypoint
-│   ├── ml/                      # Machine learning training scripts
+├── reports/                     # Model metrics reports and summaries
+├── scratch/                     # Verification scripts
+├── src/                         # Backend Python source
+│   ├── api/                     # FastAPI REST API implementation
+│   │   ├── routes/              # Sub-routers (twins.py, models.py, settings.py, etc.)
+│   │   ├── demo.py              # Modulo-clock time-replay engine
+│   │   ├── schemas.py           # Pydantic schema models
+│   │   └── main.py              # API server startup router
+│   ├── ml/                      # Machine learning estimators
+│   │   ├── training_manager.py  # Continuous learning background daemon
+│   │   └── ...                  # Estimator files
 │   ├── backend.py               # MQTT subscriber backend and watchdog
 │   └── node.py                  # WSN virtual sensor node simulator
 ├── main.py                      # Multi-node launch orchestrator
-└── requirements.txt             # Python project dependencies
+└── requirements.txt             # Unified Python dependencies
 ```
 
 ---
 
 ## 10. Technology Stack
 
-*   **Backend & API**: Python, pandas, paho-mqtt, FastAPI, Uvicorn, Pydantic
-*   **Communication**: MQTT (Mosquitto)
-*   **Data Source**: OpenWeather API
-*   **Frontend**: React, Vite, Tailwind CSS v4, Recharts, Lucide React
+*   **Backend & API**: Python 3.10+, pandas, paho-mqtt, FastAPI, Uvicorn, Pydantic v2
+*   **Communication**: MQTT (`broker.hivemq.com` public broker and local Mosquitto)
+*   **State Persistence & Sharing**: JSON file-based atomic shared state store (Digital Twin)
+*   **Data Source**: OpenWeather API *(Phase 1)*, Simulated Sensors *(Phase 2)*
+*   **Frontend**: React 18, Vite, Tailwind CSS, Recharts, Lucide React
 *   **Machine Learning**: scikit-learn, joblib, matplotlib, numpy
-*   **Hardware Simulation**: Wokwi *(Phase 2)*
-*   **Future Hardware**: ESP8266 / Arduino / BMP280 sensors *(Phase 3)*
+*   **Simulation & Embedded**: Wokwi Web Simulator, NTP Time Sync, DHT22/BMP180 C++ firmware *(Phase 2)*
+*   **Future Physical Hardware**: ESP32 DevKitC v4 / BMP180 barometric sensors / PlatformIO *(Phase 3)*
 
 ---
 
