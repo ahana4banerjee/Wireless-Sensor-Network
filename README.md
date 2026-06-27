@@ -127,6 +127,9 @@ Gradient Boosting models forecast battery behavior, latency, and packet loss to 
 
 The **ML Operations** page visualizes the complete machine learning lifecycle — deployed models, training history, evaluation metrics (MAE, RMSE, R²), and live retraining trigger progress bars that show how close the system is to scheduling the next autonomous retrain cycle.
 
+<p align="center">
+  <img src="docs/screenshots/MLOps-page.png" alt="MLOps Page" width="100%">
+</p>
 ---
 
 ## Core Dashboard Features
