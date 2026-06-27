@@ -5,6 +5,7 @@ import { wsnApi } from './services/api';
 const Overview = lazy(() => import('./components/pages/Overview'));
 const Analytics = lazy(() => import('./components/pages/Analytics'));
 const Predictions = lazy(() => import('./components/pages/Predictions'));
+const MLOps = lazy(() => import('./components/pages/MLOps'));
 const Alerts = lazy(() => import('./components/pages/Alerts'));
 const Settings = lazy(() => import('./components/pages/Settings'));
 const ExportCenter = lazy(() => import('./components/pages/ExportCenter'));
@@ -128,6 +129,13 @@ export default function App() {
             </div>
           )}
         </div>
+        <div style={{ display: currentPage === 'ml-operations' ? 'block' : 'none', width: '100%' }}>
+          {visitedPages.includes('ml-operations') && (
+            <div className="fade-in">
+              <MLOps />
+            </div>
+          )}
+        </div>
         <div style={{ display: currentPage === 'incident-center' ? 'block' : 'none', width: '100%' }}>
           {visitedPages.includes('incident-center') && (
             <div className="fade-in">
@@ -175,6 +183,7 @@ export default function App() {
                 {currentPage === 'mission-control' && 'Mission Control'}
                 {currentPage === 'network-intelligence' && 'Network Intelligence'}
                 {currentPage === 'predictive-analytics' && 'Predictive Analytics'}
+                {currentPage === 'ml-operations' && 'ML Operations'}
                 {currentPage === 'incident-center' && 'Incident Center'}
                 {currentPage === 'simulation-settings' && 'Simulation Settings'}
                 {currentPage === 'export-center' && 'Export Center'}

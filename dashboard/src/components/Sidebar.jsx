@@ -1,10 +1,11 @@
-import { LayoutDashboard, BarChart3, Binary, Bell, Radio, Settings, FileDown } from 'lucide-react';
+import { LayoutDashboard, BarChart3, Binary, Bell, Radio, Settings, FileDown, Brain } from 'lucide-react';
 
 export default function Sidebar({ currentPage, setCurrentPage, autoRefresh, setAutoRefresh, apiOnline, pollingInterval = 10 }) {
   const menuItems = [
     { id: 'mission-control', label: 'Mission Control', icon: LayoutDashboard },
     { id: 'network-intelligence', label: 'Network Intelligence', icon: BarChart3 },
     { id: 'predictive-analytics', label: 'Predictive Analytics', icon: Binary },
+    { id: 'ml-operations', label: 'ML Operations', icon: Brain },
     { id: 'incident-center', label: 'Incident Center', icon: Bell },
     { id: 'simulation-settings', label: 'Simulation Settings', icon: Settings },
     { id: 'export-center', label: 'Export Center', icon: FileDown },

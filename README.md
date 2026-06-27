@@ -123,6 +123,12 @@ Gradient Boosting models forecast battery behavior, latency, and packet loss to 
 
 ---
 
+#### ML Operations
+
+The **ML Operations** page visualizes the complete machine learning lifecycle — deployed models, training history, evaluation metrics (MAE, RMSE, R²), and live retraining trigger progress bars that show how close the system is to scheduling the next autonomous retrain cycle.
+
+---
+
 ## Core Dashboard Features
 
 - Real-time MQTT network monitoring
@@ -132,6 +138,8 @@ Gradient Boosting models forecast battery behavior, latency, and packet loss to 
 - Isolation Forest anomaly detection
 - Environmental forecasting
 - Network parameter prediction
+- **ML Operations**: model lifecycle visualization, training history, evaluation metrics
+- **Autonomous Continuous Learning**: configurable retraining triggers with live progress tracking
 - Explainable Network Health Index (NHI)
 - Fault diagnostics and watchdog monitoring
 - Configurable simulation parameters

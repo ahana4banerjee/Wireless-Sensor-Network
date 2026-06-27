@@ -45,7 +45,11 @@ export const wsnApi = {
     const response = await fetch(`${API_BASE_URL}/api/reports/system-summary`);
     if (!response.ok) throw new Error("Failed to fetch system summary preview.");
     return await response.text();
-  }
+  },
+  getModelsAll: () => fetchFromApi("/api/models"),
+  getModelsCurrent: () => fetchFromApi("/api/models/current"),
+  getModelsHistory: () => fetchFromApi("/api/models/history"),
+  getModelsStatus: () => fetchFromApi("/api/models/status"),
 };
 
 export const EXPORT_URLS = {
