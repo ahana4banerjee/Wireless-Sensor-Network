@@ -153,6 +153,29 @@ void setup() {
     client.setServer(mqtt_broker, mqtt_port);
     client.setBufferSize(512);
 
+    // Day 4: Network Time Protocol (NTP) Synchronization
+    configTime(0, 0, "pool.ntp.org", "time.nist.gov");
+    Serial.print("[NTP] Syncing time");
+    time_t now = time(nullptr);
+    int attempts = 0;
+    while (now < 24 * 3600 && attempts < 20) { // max 10 seconds timeout
+        delay(500);
+        Serial.print(".");
+        now = time(nullptr);
+        attempts++;
+    }
+    if (now >= 24 * 3600) {
+        Serial.println("\n[NTP] Time synchronized successfully!");
+        struct tm timeinfo;
+        if (getLocalTime(&timeinfo)) {
+            Serial.print("[NTP] Current UTC Time: ");
+            Serial.println(asctime(&timeinfo));
+        }
+    } else {
+        Serial.println("\n[NTP WARNING] NTP sync timed out. Using system uptime fallback.");
+    }
+
+
 
     // Build dynamic topic strings
     status_topic = String(base_topic) + "/" + String(city) + "/status";
