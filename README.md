@@ -1,109 +1,64 @@
 # Intelligent Wireless Sensor Network (WSN) Platform & Simulation
-> An Intelligent Wireless Sensor Network Platform for Predictive Environmental and Network Analytics
 
-<p align="center">
+[![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi)](https://fastapi.tiangolo.com/)
+[![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react)](https://react.dev/)
+[![MQTT](https://img.shields.io/badge/MQTT-3C3F41?style=for-the-badge&logo=mqtt)](https://mqtt.org/)
+[![C++](https://img.shields.io/badge/C++-00599C?style=for-the-badge&logo=c%2B%2B)](https://visualstudio.microsoft.com/)
+[![PlatformIO](https://img.shields.io/badge/PlatformIO-F58220?style=for-the-badge&logo=platformio)](https://platformio.org/)
 
-<img src="https://img.shields.io/badge/Phase-1%20Complete-10b981?style=for-the-badge" />
-<img src="https://img.shields.io/badge/Status-Active%20Development-8b5cf6?style=for-the-badge" />
-<img src="https://img.shields.io/badge/Architecture-Simulation%20First-3b82f6?style=for-the-badge" />
-
-</p>
-
-<p align="center">
-
-<img src="https://img.shields.io/badge/Python-3.10+-3776AB?style=flat-square&logo=python&logoColor=white" />
-<img src="https://img.shields.io/badge/FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white" />
-<img src="https://img.shields.io/badge/React-20232A?style=flat-square&logo=react&logoColor=61DAFB" />
-<img src="https://img.shields.io/badge/Vite-646CFF?style=flat-square&logo=vite&logoColor=white" />
-<img src="https://img.shields.io/badge/Tailwind_CSS-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white" />
-<img src="https://img.shields.io/badge/MQTT-660066?style=flat-square&logo=eclipsemosquitto&logoColor=white" />
-<img src="https://img.shields.io/badge/Mosquitto-3C5280?style=flat-square&logo=eclipsemosquitto&logoColor=white" />
-<img src="https://img.shields.io/badge/scikit--learn-F7931E?style=flat-square&logo=scikitlearn&logoColor=white" />
-<img src="https://img.shields.io/badge/pandas-150458?style=flat-square&logo=pandas&logoColor=white" />
-<img src="https://img.shields.io/badge/NumPy-013243?style=flat-square&logo=numpy&logoColor=white" />
-
-</p>
-
-<p align="center">
-
-<img src="https://img.shields.io/badge/IoT-Wireless%20Sensor%20Network-0EA5E9?style=flat-square" />
-<img src="https://img.shields.io/badge/Machine%20Learning-Predictive%20Analytics-9333EA?style=flat-square" />
-<img src="https://img.shields.io/badge/Anomaly%20Detection-Isolation%20Forest-EAB308?style=flat-square" />
-
-</p>
+An enterprise-grade, simulation-first IoT platform for distributed Wireless Sensor Networks (WSNs). The system is built around a decoupled architecture where the network protocols, API endpoints, and dashboards remain identical, while the telemetry generation source evolves across three distinct implementation phases.
 
 ---
 
-<p align="center">
+## 📅 Phase-Wise Evolution & Roadmap
 
-<a href="https://wireless-sensor-network.vercel.app">
-  <img src="https://img.shields.io/badge/Live%20Dashboard-Visit-8b5cf6?style=for-the-badge" />
-</a>
-
-<a href="https://wireless-sensor-network.onrender.com/docs">
-  <img src="https://img.shields.io/badge/API-Swagger-06b6d4?style=for-the-badge" />
-</a>
-
-</p>
+### 🟢 Phase 1: Pure Software Simulation (Completed)
+- **Concept**: Model the physical and environmental behaviors of WSN grids entirely in software before working with hardware interfaces.
+- **Implementation**: Five Python virtual node scripts (`src/node.py`) representing regional hubs. Each node queried the **OpenWeather API** to seed telemetry with real diurnal weather conditions (temperature, humidity, pressure).
+- **Synthetic Metrics**: Implemented math-based decay equations for Gaussian RSSI noise, linear battery discharge per transmission, and normal-distribution latency spikes.
+- **Protocol**: Message transmission routed through a local Mosquitto broker on wildcard topics using city names as identifiers (e.g. `wsn/{city}/data`).
 
 ---
 
-## 🌐 Live Deployment
-
-| Service | URL |
-|----------|------|
-| Dashboard | https://wireless-sensor-network.vercel.app |
-| API Documentation | https://wireless-sensor-network.onrender.com/docs |
-
-> **Note:** The public deployment runs in **Demo Mode**, replaying historical telemetry while preserving the complete analytics, anomaly detection, and prediction pipeline. Future phases will replace the replay engine with hardware-backed live telemetry.
-
----
-
-## 1. Project Overview & Banner
-
-The **Intelligent Wireless Sensor Network (WSN) Platform & Simulation** is a robust, modular platform engineered to bridge the gap between software-based network prototyping and physical hardware deployment. 
-
-Following a strict **simulation-first development philosophy**, the system models the complete physical, environmental, and networking behavior of a multi-node sensor grid entirely in software. This approach enables developers to construct and validate databases, ingestion gateways, machine learning forecasting engines, stateful fault diagnostic loggers, and operational dashboards before deploying code to physical hardware.
-
-By utilizing lightweight publish-subscribe protocols (MQTT), asynchronous API gateways, and dynamic frontend caching, the platform delivers an enterprise-grade Network Operations Center (NOC) environment. The system decouples telemetry generation from downstream analytics. Under this modular scheme, as the project scales through hardware iterations, **only the sensor nodes change**—the rest of the infrastructure remains reusable and unchanged.
+### 🔵 Phase 2: Virtual Embedded Hardware Simulation (Completed)
+- **Concept**: Retain all downstream code bases (API, ML pipelines, frontend) but replace the Python simulation scripts with embedded C++ firmware executing inside simulated microcontrollers.
+- **Implementation**: Generic firmware written in C++ running on simulated **ESP32** microchips inside the **Wokwi** browser sandbox. DHT22 (GPIO 4) and BMP180 (I2C 21/22) sensors simulated on the canvas.
+- **Dynamic Node Registry & MAC Identity**: Decoupled locations from firmware. The board queries its unique hardware **eFuse MAC address** on boot (`node_id = "mac"`). The backend Node Registry (`configs/nodes_registry.json`) dynamically binds the MAC address to city locations, coordinates, and coordinates.
+- **Digital Twin Management Layer**: Created an in-memory Digital Twin layer persisted to `data/twins/twins_state.json` via atomic swaps, acting as an inter-process bridge.
+- **Continuous Learning Pipeline**: Background training manager daemon (`training_manager.py`) monitoring dataset growth (500 rows) and elapsed time (24h) to trigger automatic model updates.
+- **Validation Gates & MLOps**: Added a champion/candidate validation step using $R^2$ fit tests and a custom **ML Operations** NOC dashboard.
 
 ---
 
-### Dashboard Showcase
+### 🟡 Phase 3: Physical Hardware Deployment (Future Work)
+- **Concept**: Flash the validated Phase 2 C++ firmware directly onto real physical microchips and wire them to environmental sensors.
+- **Implementation**: Flashing identical C++ code using **PlatformIO** onto physical **ESP32 DevKitC** boards. Wiring physical DHT22 and BMP180 sensor breakouts.
+- **Zero Downstream Changes**: Real boards publish matching JSON packages over home/office Wi-Fi. The REST API and React dashboard serve physical node measurements with zero changes to code.
 
-The WSN Monitor dashboard is designed as a **Network Operations Center (NOC)** for monitoring distributed wireless sensor nodes in real time. It provides live telemetry, fault diagnostics, anomaly detection, predictive analytics, and explainable network health scoring through an interactive dark-mode interface.
+---
 
-#### Mission Control
+## 📸 Dashboard Showcase
 
-The central operations console provides a live overview of gateway status, active nodes, MQTT topology, event streams, and overall network health.
-
+### 1. Mission Control NOC View
+Visualizes connection links and gateway statuses, routing dynamic communication paths from the MQTT broker down to geographical points.
 <p align="center">
   <img src="docs/screenshots/mission-control.png" alt="Mission Control Dashboard" width="100%">
 </p>
 
----
-
-#### Interactive MQTT Topology
-
-A live visualization of the Wireless Sensor Network showing broker connectivity, node status, and communication link health.
-
+### 2. Interactive SVG WSN Topology
+Nodes color-code dynamically: Green (Healthy), Yellow (Degraded battery, signal noise, latency spikes), and Red (watchdog timeout OFFLINE states).
 <p align="center">
-  <img src="docs/screenshots/topology.png" alt="Interactive MQTT Topology" width="100%">
+  <img src="docs/screenshots/topology.png" alt="WSN Topology Map" width="100%">
 </p>
 
----
-
-#### Network Health Intelligence
-
-The platform computes a deterministic **Network Health Index (NHI)** for every node and visualizes historical operational trends across the entire sensor network.
-
+### 3. Machine Learning Operations (MLOps)
+Visualizes model versions, validation benchmarks ($R^2$, MAE, RMSE), training histories, and live trigger accumulation progress.
 <p align="center">
-  <img src="docs/screenshots/network-health.png" alt="Network Health Analytics" width="100%">
+  <img src="docs/screenshots/MLOps-page.png" alt="MLOps Panel" width="100%">
 </p>
 
----
 
-#### Environmental Prediction Engine
+4. ### Environmental Prediction Engine
 
 Linear Regression models are used to forecast environmental telemetry and compare predicted values against actual observations.
 
@@ -111,9 +66,8 @@ Linear Regression models are used to forecast environmental telemetry and compar
   <img src="docs/screenshots/environment-prediction.png" alt="Temperature Prediction" width="100%">
 </p>
 
----
 
-#### Network Parameter Prediction Engine
+5. ### Network Parameter Prediction Engine
 
 Gradient Boosting models forecast battery behavior, latency, and packet loss to support predictive maintenance and fault prevention.
 
@@ -123,14 +77,6 @@ Gradient Boosting models forecast battery behavior, latency, and packet loss to 
 
 ---
 
-#### ML Operations
-
-The **ML Operations** page visualizes the complete machine learning lifecycle — deployed models, training history, evaluation metrics (MAE, RMSE, R²), and live retraining trigger progress bars that show how close the system is to scheduling the next autonomous retrain cycle.
-
-<p align="center">
-  <img src="docs/screenshots/MLOps-page.png" alt="MLOps Page" width="100%">
-</p>
----
 
 ## Core Dashboard Features
 
@@ -184,7 +130,7 @@ Developers can prototype, test regression models, and tune alarm thresholds in a
 *   **MQTT Broker**: Connects nodes to a Mosquitto server, routing status heartbeats and telemetry data.
 *   **FastAPI & React**: Exposes clean API endpoints and renders a real-time dark-mode NOC control board.
 
-### Phase 2: Wokwi Web-based Hardware Simulation (In Progress)
+### Phase 2: Wokwi Web-based Hardware Simulation (100% Completed)
 *   **Virtual Board Compilation**: Python virtual nodes are replaced with simulated ESP32 microcontroller boards running inside **Wokwi**'s browser environment.
 *   **Firmware Porting**: Embedded C/C++ scripts are executed on simulated microchips, establishing virtual WiFi (`Wokwi-GUEST`) links to connect directly to the MQTT client.
 *   **Infrastructure Reuse**: Telemetry payloads are published to a public broker (`broker.hivemq.com`) under a unique namespace (`wsn_ahana_2026`). The Python backend subscriber, FastAPI server, and React dashboard ingest the data seamlessly.
@@ -416,134 +362,60 @@ Wireless-Sensor-Network/
 ### A. Environment Configuration
 Initialize a Python virtual environment and install the required dependencies:
 ```bash
-# Initialize and activate Python virtual environment
+# Clone the repository
+git clone https://github.com/your-username/Wireless-Sensor-Network.git
+cd Wireless-Sensor-Network
+
+# Create and activate Python virtual environment
 python -m venv .venv
-.venv\Scripts\activate # On Unix: source .venv/bin/activate
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+
+# Install requirements
 pip install -r requirements.txt
 ```
-Configure your OpenWeather API key inside a `.env` file in the root directory:
-```env
-WEATHER_API_KEY=your_openweather_api_key
-```
 
-### B. Setup Mosquitto Broker
-Ensure you have Mosquitto installed and running locally on port `1883`.
+### 2. Configure Local Dev Environment
+To redirect React fetches from the production Render deployment to your local FastAPI server, create a local environment override file:
 ```bash
-# Windows Mosquitto startup check command
-net start mosquitto
+echo "VITE_API_URL=http://localhost:8000" > dashboard/.env.local
 ```
 
-### C. Launching Project Components
+### 3. Start Backend Services
+Start the MQTT ingestion subscriber, the FastAPI REST server, and the continuous retraining training manager daemon:
+```bash
+# Terminal 1: Ingestion Subscriber & Watchdog
+python src/backend.py
 
-1.  **Start Ingestor Subscriber Backend**:
-    ```bash
-    python src/backend.py
-    ```
-2.  **Start Telemetry Nodes**:
-    *   Launch all nodes concurrently:
-        ```bash
-        python main.py
-        ```
-    *   Or run a single city node manually:
-        ```bash
-        python src/node.py --city Delhi
-        ```
-3.  **Train Machine Learning Models**:
-    ```bash
-    # Train environmental forecasts
-    python src/ml/environment_predictor.py
+# Terminal 2: Background ML Retraining Daemon
+python src/ml/training_manager.py
 
-    # Train network parameter forecasts
-    python src/ml/network_predictor_v2.py
-    ```
-4.  **Run FastAPI Server**:
-    ```bash
-    uvicorn src.api.main:app --host 127.0.0.1 --port 8000 --reload
-    ```
-5.  **Run Client Dashboard**:
-    ```bash
-    cd dashboard
-    npm install
-    npm run dev
-    ```
-
-### E. Running in Portfolio Demo Mode
-If you do not want to run Mosquitto or simulator node processes (for example, for static web deployments), you can enable the stateless replay engine:
-*   **Via environment variables (Recommended)**:
-    ```bash
-    $env:DEMO_MODE="True" # Windows PowerShell
-    # Or on Unix: export DEMO_MODE=True
-    uvicorn src.api.main:app --host 127.0.0.1 --port 8000 --reload
-    ```
-*   **Via configuration files**:
-    Open `configs/settings.json`, set `"demo_mode": true` within the `"simulation"` block, and start the FastAPI server as usual.
-
-### F. Expected URLs
-*   **Vite React Client**: `http://localhost:5173`
-*   **FastAPI REST Gateway**: `http://127.0.0.1:8000`
-*   **FastAPI Documentation**: `http://127.0.0.1:8000/docs`
-
----
-
-## 12. Local Execution Workflow
-```text
-Standard Active Simulation Workflow:
-[ Start MQTT Mosquitto ] --> [ Launch subscriber backend.py ]
-                                        |
-                                        +- Check CSV Schema Migrations
-                                        \- Start Watchdog loop timers
-                                        |
-                                        v
-                         [ Launch virtual main.py runner ]
-                                        |
-                                        +- Query OpenWeather values
-                                        \- Broadcast telemetry status to Broker
-                                        |
-                                        v
-                       [ Retrain ml/network_predictor_v2.py ]
-                                        |
-                                        v
-                        [ Launch REST api/main.py server ]
-                                        |
-                                        v
-                         [ Launch Client SPA dashboard ]
+# Terminal 3: FastAPI REST Server
+uvicorn src.api.main:app --host 127.0.0.1 --port 8000 --reload
 ```
 
----
+### 4. Run Hardware Simulations (Wokwi)
+1. Open the [Wokwi WSN Simulator](https://wokwi.com/projects/382627000).
+2. Start the simulation. The generic firmware will automatically fetch coordinates and settings from the Node Registry via MQTT under the unique `wsn_ahana_2026` namespace.
 
-## 13. Current Status
-
-### Phase Progress
-```text
-Phase 1: Software Simulation Core
-██████████████████████████████████████████████ 100%
-
-Phase 2: Wokwi Virtual Hardware Simulator
-████████████████████████████████████████░░░░░ 80%
-
-Phase 3: Real ESP8266/ESP32 Microchip Deployment
-░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 0%
+### 5. Launch Client Dashboard
+```bash
+cd dashboard
+npm install
+npm run dev
 ```
+Open `http://localhost:5173` to explore the dashboard.
 
 ---
 
-## 14. Future Work
+## 📚 Technical Documentation
 
-*   **Wokwi Virtual Board Firmware**: Refactor Python nodes logic into C/C++ scripts for simulated microcontrollers and integrate virtual physical sensors (DHT22/BMP280).
-*   **WebSockets Ingestion Routing**: Replace REST polling with WebSockets for real-time dashboard updates.
-
----
-
-## 15. Author
-
-**Name**: Ahana Banerjee
-
-**University**: JNTUH
-
-**Degree**: B.Tech + M.Tech IDP in Electronics and Communication Engineering (ECE)
+For in-depth explanations of specific system components, refer to the following documents:
+- [Developer Technical Registry (CONTEXT.md)](file:///d:/Projects/College/Wireless-Sensor-Network/CONTEXT.md) — Comprehensive technical reference detailing ML feature engineering, dynamic routing, database schemas, and demo mode.
+- [System Architecture (ARCHITECTURE.md)](file:///d:/Projects/College/Wireless-Sensor-Network/ARCHITECTURE.md) — Structural layouts, sequence diagrams, lifecycles, and interface contracts.
+- [Phase 3 Hardware Deployment Guide (docs/PHASE3_HARDWARE_GUIDE.md)](file:///d:/Projects/College/Wireless-Sensor-Network/docs/PHASE3_HARDWARE_GUIDE.md) — Pinout wiring schematics, TP4056 power settings, and physical assembly lists.
+- [NOC Styling Guide (docs/design/DESIGN_SYSTEM.md)](file:///d:/Projects/College/Wireless-Sensor-Network/docs/design/DESIGN_SYSTEM.md) — Palette variables, typography, and SVG keyframe properties.
 
 ---
 
-## 16. Acknowledgements
-*   Inspiration from Wireless Sensor Network protocols and industrial monitoring platforms.
-*   Open-source communities powering the Mosquitto MQTT broker, FastAPI framework, scikit-learn, and React ecosystem.
+## 📄 License
+This project is licensed under the MIT License - see the LICENSE file for details.

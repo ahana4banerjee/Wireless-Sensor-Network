@@ -1,278 +1,211 @@
-# System Architecture & Component Design
+# Phase-Wise System Architecture & Telemetry Evolution
 
-The Intelligent Wireless Sensor Network (WSN) System follows a modular, decoupled, and layered architecture. Each phase of the roadmap preserves the communication protocols, API interfaces, and visualization views, changing only the sensor nodes' physical implementation.
+This document details the architectural design, telemetry structures, and data flows as they evolved across the development phases of the WSN platform.
 
 ---
 
-# Data Flow Architecture (Phase 1)
+## 1. System Layers Architecture (Decoupled & Agnostic)
+
+The platform enforces strict modular boundaries. Downstream layers (Database, ML Pipeline, API Gateway, Dashboard) are completely decoupled from the telemetry source. Only the device layer changes as the system evolves:
 
 ```text
-+----------------------+
-|  Virtual Sensor Node |  ==> (Generates OpenWeather telemetry, battery decay)
-|  (Python Process)    |
-+----------------------+
-            │
-            │  MQTT (wsn/{city}/status, wsn/{city}/data)
-            ▼
-+----------------------+
-|    MQTT Broker       |  ==> (Mosquitto local port 1883)
-|     (Mosquitto)      |
-+----------------------+
-            │
-            │  paho-mqtt
-            ▼
-+----------------------+
-|    Python Backend    |  ==> (Ingests packets, appends CSV logs, runs
-|   (Message Loop)     |       stateful fault checks, auto-merges dataset)
-+----------------------+
-            │
-            │  Reads CSV tables (wsn_dataset.csv, alerts.log)
-            ▼
-+----------------------+
-|   FastAPI REST API   |  ==> (Pydantic validation, CORS enabled,
-|  (Uvicorn Gateway)   |       serves endpoint routes on port 8000)
-+----------------------+
-            │
-            │  HTTP / Fetch (10-second polling)
-            ▼
-+----------------------+
-|    React Frontend    |  ==> (Vite dynamic SPA client, Recharts,
-|    (Vite Client)     |       Interactive SVG WSN Topology, Event Stream)
-+----------------------+
+┌────────────────────────────────────────────────────────────────────────┐
+│                        1. TELEMETRY SOURCE LAYER                       │
+│  Phase 1: Python Virtual Node Process (OpenWeather API seed)            │
+│  Phase 2: Simulated ESP32 on Wokwi Web Simulator (DHT22/BMP180 C++)    │
+│  Phase 3: Physical ESP32 Microcontroller (DHT22/BMP180 C++ Target)    │
+└───────────────────────────────────┬────────────────────────────────────┘
+                                    │
+                                    ▼ MQTT Protocols (TCP Port 1883)
+┌────────────────────────────────────────────────────────────────────────┐
+│                        2. COMMUNICATION LAYER                          │
+│  Phase 1: Local Mosquitto Broker (wsn/{city}/data & /status)           │
+│  Phase 2 & 3: Public MQTT Broker (wsn_ahana_2026/<node_id>/data)       │
+└───────────────────────────────────┬────────────────────────────────────┘
+                                    │
+                                    ▼ Socket Ingestion (paho-mqtt)
+┌────────────────────────────────────────────────────────────────────────┐
+│                        3. DATA & INGESTION LAYER                       │
+│  Ingestion Subscriber daemon (backend.py) + Watchdog timer             │
+│  Persisted CSV logs (wsn_dataset.csv) + Digital Twin Shared State      │
+└───────────────────────────────────┬────────────────────────────────────┘
+                                    │
+                                    ▼ Local Storage & JSON Bridging
+┌────────────────────────────────────────────────────────────────────────┐
+│                       4. ANALYTICS & API GATEWAY LAYER                 │
+│  FastAPI (Uvicorn REST gateway)                                        │
+│  Continuous Learning daemon (training_manager.py)                      │
+└───────────────────────────────────┬────────────────────────────────────┘
+                                    │
+                                    ▼ HTTP / REST Interfaces
+┌────────────────────────────────────────────────────────────────────────┐
+│                        5. PRESENTATION LAYER                           │
+│  React NOC Dashboard (Mission Control SVG Topology, Live Events)       │
+│  ML Operations Panel (Retraining tracking, R² validation, history)      │
+└────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-# Data Flow Architecture (Portfolio Demo Mode)
+## 2. Phase-Wise Telemetry Evolution & Data Flows
 
-For public deployments or quick testing without active simulator processes (such as the Mosquitto MQTT broker and individual Python node scripts), the platform implements a stateless **Demo Mode**. It reads historical node telemetry files directly, calculates an offset index using current wall-clock ticks, and dynamically serves replayed metrics with updated timestamps over the REST API.
-
-```text
-+------------------------+
-| Historical CSV Logs    |  ==> (Located in data/logs/*_history.csv)
-+------------------------+
-            |
-            |  Modulo Replay Tick: tick = current_time / polling_interval
-            v
-+------------------------+
-| Demo Mode Interceptor  |  ==> (Implemented in src/api/demo.py, overrides routes)
-+------------------------+
-            |
-            |  Bypasses MQTT, virtual nodes, and subscription processor
-            v
-+------------------------+
-|   FastAPI REST API     |  ==> (Port 8000, returns replayed data structured via Pydantic)
-+------------------------+
-            |
-            |  HTTP / Fetch
-            v
-+------------------------+
-|    React Frontend      |  ==> (Vite Client on Port 5173, displays ONLINE nodes)
-+------------------------+
-```
-
----
-
-# Data Flow Architecture (Phase 2: Wokwi Web-based Hardware Simulation)
+### 2.1 Phase 1: Pure Software Simulation
+In Phase 1, all system components ran on the local host machine, using lightweight python mock nodes.
 
 ```text
-+----------------------+
-|   Wokwi ESP32 Node   |  ==> (Virtual hardware board, simulated ESP32 running C++)
-|  (Simulated Board)   |
-+----------------------+
-            │
-            │  MQTT (wsn_ahana_2026/{city}/status, wsn_ahana_2026/{city}/data)
-            ▼
-+----------------------+
-| Public MQTT Broker   |  ==> (broker.hivemq.com)
-+----------------------+
-            │
-            │  paho-mqtt
-            ▼
-+----------------------+
-|    Python Backend    |
-+----------------------+
-            │
-            │  Reads CSV tables
-            ▼
-+----------------------+
-|   FastAPI REST API   |
-+----------------------+
-            │
-            │  HTTP / Fetch
-            ▼
-+----------------------+
-|    React Frontend    |
-+----------------------+
+┌────────────────────────────────────────────────────────────────────────┐
+│                        PHASE 1 TELEMETRY DATA FLOW                     │
+│                                                                        │
+│   [OpenWeather API] ──► [Virtual Node Script (node.py)]                │
+│                               │                                        │
+│                               ▼ MQTT over Localhost (Port 1883)        │
+│                       [Mosquitto Broker]                               │
+│                               │                                        │
+│                               ▼ paho-mqtt socket                       │
+│                      [backend.py Ingestor]                             │
+│                               │                                        │
+│                  ┌────────────┴────────────┐                           │
+│                  ▼                         ▼                           │
+│             [CSV Files]           [Live Data Buffer]                   │
+│         data/*_history.csv       live_data_buffer (dict)               │
+│                  │                         │                           │
+│                  └────────────┬────────────┘                           │
+│                               ▼                                        │
+│                        [FastAPI Server]                                │
+│                               │                                        │
+│                               ▼ HTTP REST / polling                    │
+│                      [React NOC Dashboard]                             │
+└────────────────────────────────────────────────────────────────────────┘
 ```
+- **Inputs**: Real diurnal temperature, humidity, and pressure conditions queried from the OpenWeather API for each target city.
+- **Synthetics**: Node scripts injected mathematical decay models (Gaussian RSSI noise, linear battery discharge per packet, standard-deviation latency jitters).
+- **Addressing**: Topic layout used city names directly: `wsn/{city}/data` and `wsn/{city}/status`.
 
 ---
 
-# Data Flow Architecture (Phase 3: Real ESP8266/Arduino Hardware)
+### 2.2 Phase 2: Virtual Embedded Hardware Simulation
+Phase 2 replaced the Python simulation script with standard Arduino C++ firmware executed within the cloud-based **Wokwi** ESP32 simulator.
 
 ```text
-+----------------------+
-|  Physical Sensor Node|  ==> (ESP8266 / Arduino board with DHT11 sensors)
-|   (Real Hardware)    |
-+----------------------+
-            │
-            │  MQTT (wsn_ahana_2026/{city}/status, wsn_ahana_2026/{city}/data)
-            ▼
-+----------------------+
-| Public/Local Broker  |
-+----------------------+
-            │
-            │  paho-mqtt
-            ▼
-+----------------------+
-|    Python Backend    |
-+----------------------+
-            │
-            │  Reads CSV tables
-            ▼
-+----------------------+
-|   FastAPI REST API   |
-+----------------------+
-            │
-            │  HTTP / Fetch
-            ▼
-+----------------------+
-|    React Frontend    |
-+----------------------+
+┌────────────────────────────────────────────────────────────────────────┐
+│                        PHASE 2 TELEMETRY DATA FLOW                     │
+│                                                                        │
+│   [Virtual Sensors] ──► [Wokwi ESP32 Simulator (C++ Sketch)]           │
+│    (DHT22 & BMP180)           │                                        │
+│                               ▼ Virtual Wi-Fi (Wokwi-GUEST AP)         │
+│                       [broker.hivemq.com] (Public Broker)              │
+│                               │                                        │
+│                               ▼ TCP port 1883                          │
+│                      [backend.py Ingestor]                             │
+│                               │                                        │
+│          ┌────────────────────┼────────────────────┐                   │
+│          ▼                    ▼                    ▼                   │
+│    [CSV Database]     [Digital Twin Store]   [ML Retrain Daemon]       │
+│    wsn_dataset.csv     twins_state.json      training_manager.py       │
+│          │                    │                    │                   │
+│          └────────────────────┼────────────────────┘                   │
+│                               ▼                                        │
+│                       [FastAPI Routes]                                 │
+│                   /api/live-data, /api/twins                           │
+│                               │                                        │
+│                               ▼ HTTP REST / polling                    │
+│                      [React NOC Dashboard]                             │
+│                        (Added: MLOps tab)                              │
+└────────────────────────────────────────────────────────────────────────┘
 ```
+- **Hardware Integration**: Virtual DHT22 and BMP180 sensors were wired to GPIO/I2C registers of a simulated ESP32 board.
+- **Identity Decoupling**: Firmware queried its unique eFuse station MAC address to identify itself (`node_id = "mac"`). The C++ sketch publishes to generic topics: `wsn_ahana_2026/<mac_address>/data`.
+- **Dynamic Registry Mapping**: The backend Node Registry parsed the topic, looked up the MAC address, and resolved the node metadata (Location, Coordinates, Sensor specifications) dynamically.
+- **State Persistence**: Introduced the **Digital Twin** layer. `backend.py` updates in-memory states and saves snapshots to `twins_state.json` via thread-safe atomic swaps, allowing FastAPI (`uvicorn`) to read them.
+- **Autonomous Learning**: Enabled a background **Training Manager** daemon that monitors row counts and timestamps, retraining linear and Gradient Boosting predictors automatically when trigger limits are met.
 
 ---
 
-# Node Transition Lifecycle (Phases 1-3)
+### 2.3 Phase 3: Physical Hardware Deployment
+Phase 3 translates the validated virtual models to physical, real-world components in the field.
 
 ```text
-Phase 1: Python Virtual Nodes ────┐
-                                   │
-Phase 2: Wokwi Web Simulation ─────┼─► [MQTT Broker] ─► [Backend API] ─► [React Dashboard]
-                                   │
-Phase 3: Physical ESP8266 Node ────┘
+┌────────────────────────────────────────────────────────────────────────┐
+│                        PHASE 3 TELEMETRY DATA FLOW                     │
+│                                                                        │
+│   [Physical Sensors] ──► [ESP32 DevKit Microchip (C++)]                │
+│    (DHT22 & BMP180)           │                                        │
+│                               ▼ Home / Campus Wi-Fi Link               │
+│                       [Public/Private MQTT Broker]                     │
+│                               │                                        │
+│                               ▼                                        │
+│                            (Same Ingestor, ML, Twin, API Layers)       │
+└────────────────────────────────────────────────────────────────────────┘
+```
+- **Hardware Assembly**: A physical ESP32 DevKitC v4 wired to a DHT22 (GPIO 4) and a BMP180 sensor shield (I2C SDA 21, SCL 22).
+- **Firmware Compilation**: The identical C++ code is compiled locally using **PlatformIO** and flashed onto the board over a USB cable.
+- **Zero Downstream Changes**: The physical device publishes the same JSON payload format to the same MQTT topics. The registry, ingestor, twin file store, API endpoints, and dashboard run without modification.
+
+---
+
+## 3. Operations Lifecycles & State Flows
+
+### 3.1 Digital Twin State Engine
+The Digital Twin manager tracks node heartbeats to identify anomalies and transitions.
+
+```text
+                       +-------------------------+
+                       |   nodes_registry.json   |
+                       +------------┬------------+
+                                    │
+                                    ▼ (Startup Scaffold)
+                       +-------------------------+
+                       |     Status: OFFLINE     | (All metrics: None)
+                       +------------┬------------+
+                                    │
+                                    ├◄─────────────────────────┐
+                         [MQTT Status / Data Packet]           │
+                                    ▼                          │
+                       +-------------------------+             │
+                       |     Status: ONLINE      |             │
+                       |   (Heartbeat Active)    |             │
+                       +------------┬------------+             │
+                                    │                          │
+                                    ├─► [data packet]          │
+                                    │   Update Sensor readings │
+                                    │   Update RSSI/Latency    │
+                                    │   Recalculate Health     │
+                                    │                          │
+                 (watchdog timeout) │                          │
+                  no packets > 45s  ▼                          │
+                       +-------------------------+             │
+                       |     Status: OFFLINE     |             │
+                       |  (Watchdog Flagged)     |             │
+                       +------------┬------------+             │
+                                    │                          │
+                                    └──────────────────────────┘
 ```
 
-> [!NOTE]
-> **Architectural Pivot (PICSimLab to Wokwi)**: Phase 2 was originally designed using the PICSimLab emulator. Due to Windows-specific virtual serial port conflicts (COM port sharing limits between the bridge and terminal monitor) and QEMU's WiFi connection scanning limitations, the architecture was upgraded to Wokwi. Wokwi provides true browser-based WiFi emulation (connecting to the virtual `Wokwi-GUEST` network) allowing simulated ESP32 chips running standard C++ firmware to connect directly to a public MQTT broker (`broker.hivemq.com`) under a unique namespace (`wsn_ahana_2026`). This ensures zero local driver installations and 100% code portability to real hardware.
-
-The underlying network communication model, backend processors, API services, and frontend visualization structures remain completely **unchanged** throughout. Only the telemetry source evolves.
-
----
-
-# Backend & REST API Specifications
-
-The Python backend subscriber acts as the diagnostic and merging engine. The **FastAPI** layer exposes these stats through structured endpoints using **Pydantic** models.
-
-### API Endpoint Index
-
-#### 1. System Health Checklist
-* **Route**: `GET /api/health`
-* **Response**:
-  ```json
-  {
-    "status": "online",
-    "service": "wsn-api"
-  }
-  ```
-
-#### 2. WSN Node Registries
-* **Route**: `GET /api/nodes`
-* **Description**: Returns all simulated node connection statuses and live battery/signal indexes.
-* **Response Structure**:
-  ```json
-  {
-    "total_nodes": 5,
-    "nodes": [
-      {
-        "node_id": "Hyderabad",
-        "status": "ONLINE",
-        "battery_level": 98.4,
-        "signal_strength": -65.0
-      }
-    ]
-  }
-  ```
-
-#### 3. Real-time Flat Telemetry
-* **Route**: `GET /api/live-data`
-* **Description**: Delivers the latest single observation package logged for each active regional node.
-
-#### 4. Machine Learning Anomalies
-* **Route**: `GET /api/anomalies`
-* **Description**: Computes overall contamination rates and lists recent outlier events identified by the Isolation Forest model.
-* **Response Structure**:
-  ```json
-  {
-    "total_anomalies": 119,
-    "anomaly_percentage": 5.01,
-    "recent_anomalies": [
-      {
-        "timestamp": "Tue Jun  9 00:05:10 2026",
-        "unix_ts": 1778573179.249,
-        "node_id": "Delhi",
-        "temp": 40.33,
-        "anomaly_flag": 1
-      }
-    ]
-  }
-  ```
-
-#### 5. Network Summary Statistics
-* **Route**: `GET /api/analytics/summary`
-* **Description**: Exposes overall dataset metrics, including global means of latency, packet drop rates, and temperature.
-
-#### 6. Environmental Predictions
-* **Routes**: `GET /api/predictions/temperature` & `GET /api/predictions/humidity`
-* **Description**: Serves forecast points compared directly against regression models persisted in `models/`.
-
-#### 7. Stateful System Alarms
-* **Route**: `GET /api/alerts`
-* **Description**: Fetches current active incidents alongside the historical database audit feed parsed from `data/logs/alerts.log`.
-
-#### 8. Deterministic Network Health Details
-* **Route**: `GET /api/network-health`
-* **Description**: Computes and returns the Network Health Index (NHI) metrics (battery, signal, latency, packet loss subscores and statuses) for each node based on latest check-ins.
-
-#### 9. Network Parameter Predictions
-* **Route**: `GET /api/network-predictions`
-* **Description**: Returns actual vs predicted test observations for battery levels, packet losses, and response latencies generated by Gradient Boosting.
-
-#### 10. Central System Health Score
-* **Route**: `GET /api/system-score`
-* **Description**: Aggregates node health scores to calculate average health coefficients and classification states.
-
-#### 11. Simulation Parameters Configuration
-* **Routes**: `GET /api/settings` & `POST /api/settings`
-* **Description**: Serves or saves the simulated metrics constraints profile, writing outputs to `configs/settings.json`. Supports the optional `demo_mode` parameter to control stateless telemetry replay state.
-
-#### 12. Query Logs Export Engine
-* **Route**: `GET /api/export`
-* **Description**: Performs database queries on historical logs, returning download channels for custom range checks.
-
----
-
-# Frontend Architecture & Interactive Features
-
-The user interface is built as a single-page application (SPA) optimized for high-density network operations control.
-
-### Core Features
-
-1. **Executive Status Grid (Header)**:
-   * Displays gateway status (ping indicators), active operational nodes, total database size, running packet drop averages, and network latency metrics.
-
-2. **Interactive SVG Topology Panel**:
-   * Visualizes the network structure mapping drop lines from the broker down to nodes (`HYD`, `DEL`, `MUM`, `BLR`, `SEC`).
-   * Color-codes nodes dynamically: **Green** (Healthy), **Yellow** (Warning: battery drop, packet drop, signal attenuation, or latency spike), and **Red** (Fault/Offline).
-   * Connection links show flowing dash animations (`flow-line-active` keyframes) for healthy feeds, and static solid red lines for broken links.
-   * Node hovers reveal overlays reporting precise battery levels, RSSI strength, latency in ms, and packet loss.
-
-3. **Live Operational Event Stream (Sidebar)**:
-   * Appends checking events (heartbeats, battery warnings, prediction syncs, latency spikes) dynamically in real-time.
-   * Auto-scrolls to target the latest incoming feeds.
-   * Color-codes icons and borders by risk severity.
-
-4. **Performance & Bundle Optimizations**:
-   * **Lazy Loading**: Code-splits secondary route pages asynchronously via `React.lazy()` to shrink initial load times.
-   * **Page Skeletons**: Displays pulsing loading blocks and spinners inside chart views while pages fetch data to ensure seamless transitions.
-   * **Cascading Render Resolvers**: Moves synchronous `setState` out of `useEffect` callbacks to click handlers (with `useCallback` references) to prevent layout rendering blocks.
+### 3.2 Continuous Learning Retraining Engine
+```text
+  [In-Memory Metric Evaluation]
+  Evaluated every 15 seconds by training_manager.py
+               │
+               ▼
+   Check trigger boundaries:
+   - Dataset Growth: accumulated >= 500 new rows?
+   - Elapsed Time: cooldown >= 24 hours?
+               │
+               ├─── [No]  ──► Wait (Skip Retrain Run)
+               │
+               └─── [Yes] ──► Train Candidate Model (80% dataset split)
+                                    │
+                                    ▼
+                              Validate Model (20% dataset split)
+                                    │
+                                    ▼
+                         Champion Comparison Test:
+                      Is R² (Candidate) > R² (Active)?
+                                    │
+                     ┌──────────────┴──────────────┐
+                     ▼ [No]                        ▼ [Yes]
+              Reject Candidate              Deploy Candidate
+             (Status: REJECTED)             (Status: ACTIVE)
+             Log in registry.json           Overwrite active pickle (.pkl)
+                                            Update MLOps table logs
+```
