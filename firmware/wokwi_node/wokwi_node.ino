@@ -6,7 +6,7 @@
 #include <Adafruit_BMP085.h>
 
 // --- Configuration Parameters ---
-const char* city = "Bangalore";  // Change to Delhi, Mumbai, Hyderabad, or Secunderabad as needed
+const char* node_id = "node_01";  // Change to node_01, node_02, etc. (mapped in backend registry)
 const char* base_topic = "wsn_ahana_2026";
 
 // WiFi Settings for Wokwi
@@ -115,8 +115,8 @@ void reconnect() {
         Serial.print(mqtt_broker);
         Serial.print("...");
         
-        // Create a unique client ID based on city and random number
-        String clientId = "WSN-Node-" + String(city) + "-" + String(random(0xffff), HEX);
+        // Create a unique client ID based on node_id and random number
+        String clientId = "WSN-Node-" + String(node_id) + "-" + String(random(0xffff), HEX);
         
         if (client.connect(clientId.c_str())) {
             Serial.println("connected");
@@ -177,12 +177,12 @@ void setup() {
 
 
     // Build dynamic topic strings
-    status_topic = String(base_topic) + "/" + String(city) + "/status";
-    data_topic = String(base_topic) + "/" + String(city) + "/data";
+    status_topic = String(base_topic) + "/" + String(node_id) + "/status";
+    data_topic = String(base_topic) + "/" + String(node_id) + "/data";
 
     Serial.println("=========================================");
-    Serial.print(" WSN ESP32 Wokwi Node (Day 3): ");
-    Serial.println(city);
+    Serial.print(" WSN ESP32 Wokwi Node: ");
+    Serial.println(node_id);
     Serial.print(" Status Topic: ");
     Serial.println(status_topic);
     Serial.print(" Data Topic: ");
@@ -211,8 +211,8 @@ void loop() {
 
             // Create JSON status Document
             StaticJsonDocument<256> doc;
-            doc["node_id"] = city;
-            doc["city"] = city;
+            doc["node_id"] = node_id;
+            doc["city"] = node_id;
             doc["status"] = "ONLINE";
             doc["timestamp"] = time(NULL) > 100000 ? time(NULL) : (millis() / 1000.0);
             doc["ts"] = doc["timestamp"];
@@ -268,8 +268,8 @@ void loop() {
 
             // Create JSON data Document
             StaticJsonDocument<512> doc;
-            doc["node_id"] = city;
-            doc["city"] = city;
+            doc["node_id"] = node_id;
+            doc["city"] = node_id;
             doc["timestamp"] = time(NULL) > 100000 ? time(NULL) : (millis() / 1000.0);
             doc["ts"] = doc["timestamp"];
             doc["seq_num"] = seqNum;
