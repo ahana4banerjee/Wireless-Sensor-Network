@@ -7,7 +7,7 @@
 #include <Adafruit_BMP085.h>
 
 // --- Configuration Parameters ---
-const char* node_id = "node_01";  // Change to node_01, node_02, etc. (mapped in backend registry)
+String node_id = "mac";  // Set to "mac" to use hardware MAC address dynamically, or use custom hardcoded string
 const char* base_topic = "wsn_ahana_2026";
 
 // WiFi Settings for Wokwi
@@ -176,6 +176,18 @@ void setup() {
     }
 
 
+
+    // Dynamic MAC-based identity resolution
+    if (node_id == "mac") {
+        uint8_t mac[6];
+        WiFi.macAddress(mac);
+        char macStr[18];
+        snprintf(macStr, sizeof(macStr), "%02x:%02x:%02x:%02x:%02x:%02x", 
+                 mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+        node_id = String(macStr);
+    }
+    Serial.print("[SYSTEM] Active Node ID: ");
+    Serial.println(node_id);
 
     // Build dynamic topic strings
     status_topic = String(base_topic) + "/" + String(node_id) + "/status";
