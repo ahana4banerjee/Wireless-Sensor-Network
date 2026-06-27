@@ -23,5 +23,10 @@
         "Mumbai",
         "Bangalore",
         "Secunderabad"
-    ]
+    ],
+    "retraining": {
+        "check_interval_seconds": 15,
+        "min_new_samples": 500,
+        "min_time_elapsed_hours": 24
+    }
 }
