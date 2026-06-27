@@ -8,6 +8,7 @@ from src.api.routes.network_intelligence import router as network_intelligence_r
 from src.api.routes.settings import router as settings_router
 from src.api.routes.export import router as export_router
 from src.api.routes.models import router as models_router
+from src.api.routes.twins import router as twins_router
 from src.api.schemas import HealthResponse, RootResponse
 
 app = FastAPI(
@@ -34,6 +35,7 @@ app.include_router(network_intelligence_router, prefix="/api", tags=["Network In
 app.include_router(settings_router, prefix="/api", tags=["Settings & Configurations"])
 app.include_router(export_router, prefix="/api", tags=["Export & Reporting Services"])
 app.include_router(models_router, prefix="/api", tags=["Model Management & Registry"])
+app.include_router(twins_router, prefix="/api", tags=["Digital Twins"])
 
 @app.get("/", response_model=RootResponse)
 def read_root():

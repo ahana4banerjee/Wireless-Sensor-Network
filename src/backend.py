@@ -7,6 +7,7 @@ from collections import deque
 import logging
 from logging.handlers import RotatingFileHandler
 from utils.fault_detector import FaultDetector
+from utils.digital_twin_manager import twin_manager
 
 # --- Configuration ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -246,6 +247,12 @@ def on_message(client, userdata, msg):
             if seq_num is not None:
                 update_packet_loss(city, seq_num)
             
+            # Update Digital Twin from heartbeat
+            try:
+                twin_manager.update_twin(node_id, city, payload, msg_type="status")
+            except Exception as te:
+                logger.debug(f"[DigitalTwin] Failed to update twin on status: {te}")
+            
             # Check for offline resolution
             if city in fault_detector.active_alerts and fault_detector.active_alerts[city].get("OFFLINE") == "CRITICAL":
                 alert = fault_detector._create_alert(city, "OFFLINE", "RESOLVED", "Node is back ONLINE", 0.0)
@@ -279,10 +286,16 @@ def on_message(client, userdata, msg):
                 live_data_buffer[city] = deque(maxlen=50)
             live_data_buffer[city].append(flat_data)
             
-            # 2. Log to City-Specific CSV
+            # 2. Update Digital Twin
+            try:
+                twin_manager.update_twin(node_id, city, flat_data, msg_type="data")
+            except Exception as te:
+                logger.debug(f"[DigitalTwin] Failed to update twin on data: {te}")
+            
+            # 3. Log to City-Specific CSV
             save_to_csv(city, flat_data)
             
-            # 3. Log to Unified Processed Dataset
+            # 4. Log to Unified Processed Dataset
             save_to_processed_dataset(city, flat_data)
 
     except Exception as e:
@@ -356,11 +369,17 @@ def save_to_processed_dataset(city, data):
 
 
 def monitor_health():
-    """Watchdog logic to check for silent nodes."""
+    """Watchdog logic to check for silent nodes and mark offline twins."""
     now = time.time()
     alerts = fault_detector.check_node_timeouts(node_health, now)
     for alert in alerts:
         log_alert(alert)
+        # Keep Digital Twin status in sync with watchdog decisions
+        if alert.get("alert_type") == "OFFLINE" and alert.get("severity") == "CRITICAL":
+            try:
+                twin_manager.mark_offline(alert["node_id"])
+            except Exception as te:
+                logger.debug(f"[DigitalTwin] Failed to mark offline: {te}")
 
 def start_backend():
     # Perform startup schema migration for existing logs
