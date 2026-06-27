@@ -85,3 +85,9 @@ def get_live_telemetry():
         ))
         
     return records
+
+@router.get("/nodes/registry")
+def get_node_registry():
+    """Returns the dynamic Node Registry mapping node_ids to locations and metadata."""
+    from src.utils.node_registry import load_node_registry
+    return load_node_registry()

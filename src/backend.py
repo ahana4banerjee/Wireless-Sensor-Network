@@ -231,8 +231,13 @@ def on_connect(client, userdata, flags, reason_code, properties=None):
 def on_message(client, userdata, msg):
     try:
         topic_parts = msg.topic.split('/')
-        city = topic_parts[-2]
+        node_id = topic_parts[-2]
         msg_type = topic_parts[-1]
+        
+        from src.utils.node_registry import resolve_node_id, update_node_last_seen
+        city = resolve_node_id(node_id)
+        update_node_last_seen(node_id, time.time())
+        
         payload = json.loads(msg.payload.decode())
 
         if msg_type == "status":

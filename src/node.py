@@ -3,22 +3,26 @@ import json
 import random
 import requests
 import paho.mqtt.client as mqtt
-from dotenv import load_dotenv
 import os
+import sys
 import argparse
-
 # --- Path Configuration ---
-# Ensures the script can find 'settings.json' regardless of where it is run from
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.abspath(os.path.join(BASE_DIR, ".."))
+sys.path.append(PROJECT_ROOT)
+
 CONFIG_PATH = os.path.join(BASE_DIR, "..", "configs", "settings.json")
 
 # Load Environment Variables (API Key)
+from dotenv import load_dotenv
 load_dotenv(os.path.join(BASE_DIR, "..", ".env"))
 API_KEY = os.getenv("WEATHER_API_KEY")
 
 class SensorNode:
-    def __init__(self, city, config):
-        self.city = city
+    def __init__(self, node_id, config):
+        self.node_id = node_id
+        from src.utils.node_registry import resolve_node_id
+        self.city = resolve_node_id(node_id)
         self.config = config
         self.broker = config['mqtt']['broker']
         self.port = config['mqtt']['port']
@@ -92,7 +96,7 @@ class SensorNode:
             
             # Professional Payload: Flattened for ML and CSV ease
             payload = {
-                "node_id": self.city,
+                "node_id": self.node_id,
                 "ts": time.time(),
                 "seq_num": self.seq_num,
                 "metrics": {
@@ -162,9 +166,9 @@ class SensorNode:
                     if success:
                         self.seq_num += 1
                         base_topic = self.config.get('mqtt', {}).get('base_topic', 'wsn')
-                        status_topic = f"{base_topic}/{self.city}/status"
+                        status_topic = f"{base_topic}/{self.node_id}/status"
                         status_payload = {
-                            "node_id": self.city, 
+                            "node_id": self.node_id, 
                             "status": "ONLINE", 
                             "ts": current_time,
                             "seq_num": self.seq_num,
@@ -191,7 +195,7 @@ class SensorNode:
                         data_payload = self.fetch_weather_data(latency_ms)
                         if data_payload:
                             base_topic = self.config.get('mqtt', {}).get('base_topic', 'wsn')
-                            data_topic = f"{base_topic}/{self.city}/data"
+                            data_topic = f"{base_topic}/{self.node_id}/data"
                             self.client.publish(data_topic, json.dumps(data_payload))
                             print(f"[{self.city}] Data packet sent successfully (Seq: {self.seq_num}, Latency: {latency_ms}ms, Battery: {round(self.battery_level, 2)}%).")
                     last_data_tx = current_time
@@ -207,8 +211,14 @@ class SensorNode:
 if __name__ == "__main__":
     # Setup CLI arguments
     parser = argparse.ArgumentParser(description="WSN Sensor Node Simulation")
-    parser.add_argument("--city", required=True, help="Name of the city this node represents")
+    parser.add_argument("--node-id", required=False, help="Node ID mapping in the registry")
+    parser.add_argument("--city", required=False, help="Name of the city (fallback/legacy mode)")
     args = parser.parse_args()
+
+    node_id_arg = args.node_id or args.city
+    if not node_id_arg:
+        print("Error: Either --node-id or --city must be specified.")
+        exit(1)
 
     # Load Configuration
     try:
@@ -219,5 +229,5 @@ if __name__ == "__main__":
         exit(1)
 
     # Initialize and Run Node
-    node = SensorNode(args.city, settings)
+    node = SensorNode(node_id_arg, settings)
     node.start()
