@@ -205,9 +205,14 @@ When active, it intercepts data queries and serves replayed historical telemetry
 ```
 1.  **Status Check**: The interceptor verifies if Demo Mode is enabled by checking the `DEMO_MODE` environment variable (highest priority) or checking `"demo_mode"` inside `configs/settings.json`.
 2.  **Tick Calculation**: Calculates a virtual replay tick index based on the wall-clock time divided by the configured `polling_interval` (default 10s):
-    $$\text{tick} = \lfloor\frac{\text{unix\_time}}{\text{polling\_interval}}\rfloor$$
+```text
+tick = floor(unix_time / polling_interval)
+```
 3.  **Cyclic Telemetry Selection**: Sequentially loops through each city's historical dataset using a modulo wrap-around index:
-    $$\text{index} = \text{tick} \pmod{\text{dataset\_length}}$$
+    
+```text
+index = tick % dataset_length
+```
 4.  **Live Watchdog Syncing**: Automatically replaces historical timestamp columns with the current system time. This keeps nodes marked as `ONLINE` (green connectivity links) under the dashboard's 45-second watchdog check-in threshold.
 
 ---
