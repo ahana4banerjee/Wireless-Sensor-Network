@@ -200,12 +200,12 @@ def retrain_models(bootstrap=False):
     dataset_size = len(df)
     
     # Define features
-    TEMP_FEATURES = ["unix_ts", "pressure", "wind_speed", "humidity", "hour", "day", "month"]
-    HUMIDITY_FEATURES = ["unix_ts", "pressure", "wind_speed", "temp", "hour", "day", "month"]
+    TEMP_FEATURES = ["pressure", "wind_speed", "humidity", "hour", "day", "month"]
+    HUMIDITY_FEATURES = ["pressure", "wind_speed", "temp", "hour", "day", "month"]
     
-    BATTERY_FEATURES = ["unix_ts", "signal_strength", "latency_ms", "packet_loss_rate", "anomaly_flag"]
-    LATENCY_FEATURES = ["unix_ts", "signal_strength", "packet_loss_rate", "battery_level"]
-    PACKET_LOSS_FEATURES = ["unix_ts", "signal_strength", "battery_level", "latency_ms"]
+    BATTERY_FEATURES = ["signal_strength", "latency_ms", "packet_loss_rate", "anomaly_flag"]
+    LATENCY_FEATURES = ["signal_strength", "packet_loss_rate", "battery_level"]
+    PACKET_LOSS_FEATURES = ["signal_strength", "battery_level", "latency_ms"]
     
     features_A = [
         "previous_battery_level", "previous_latency", "previous_packet_loss",
@@ -299,14 +299,11 @@ def retrain_models(bootstrap=False):
             new_ver_num = int(current_ver.replace("v", "")) + 1
             new_version = f"v{new_ver_num}"
             
-            filename = f"{key}_{new_version}.pkl"
+            filename = f"{key}.pkl"
             model_path = os.path.join(MODELS_DIR, filename)
             
-            # Save candidate
+            # Save candidate directly to canonical name without duplication
             joblib.dump(candidate, model_path)
-            # Maintain backward compatibility legacy name
-            legacy_path = os.path.join(MODELS_DIR, f"{key}.pkl")
-            shutil.copy(model_path, legacy_path)
             
             # Update registry history
             if key not in registry:
@@ -341,15 +338,20 @@ def retrain_models(bootstrap=False):
                 "predicted": preds_cand
             }).sort_values("unix_ts")
             
-            if key in ["temp_model", "humidity_model"]:
-                csv_path = os.path.join(PREDICTIONS_ENV_DIR, f"{target}_predictions.csv")
-                predictions_df.to_csv(csv_path, index=False)
-            elif key.startswith("gb_"):
-                csv_path = os.path.join(PREDICTIONS_NET_DIR, f"{key}_predictions.csv")
-                # Save both versioned and legacy filenames
-                predictions_df.to_csv(csv_path, index=False)
-            else:
-                csv_path = os.path.join(PREDICTIONS_NET_DIR, f"{target}_predictions.csv")
+            # Determine prediction file path using a robust mapping to avoid duplicates
+            pred_map = {
+                "temp_model": (PREDICTIONS_ENV_DIR, "temperature_predictions.csv"),
+                "humidity_model": (PREDICTIONS_ENV_DIR, "humidity_predictions.csv"),
+                "battery_model": (PREDICTIONS_NET_DIR, "battery_predictions.csv"),
+                "latency_model": (PREDICTIONS_NET_DIR, "latency_predictions.csv"),
+                "packet_loss_model": (PREDICTIONS_NET_DIR, "packet_loss_predictions.csv"),
+                "gb_battery_model": (PREDICTIONS_NET_DIR, "gb_battery_predictions.csv"),
+                "gb_latency_model": (PREDICTIONS_NET_DIR, "gb_latency_predictions.csv"),
+                "gb_packet_loss_model": (PREDICTIONS_NET_DIR, "gb_packet_loss_predictions.csv"),
+            }
+            if key in pred_map:
+                folder, filename = pred_map[key]
+                csv_path = os.path.join(folder, filename)
                 predictions_df.to_csv(csv_path, index=False)
                 
             logger.info(f"Model {key} version {new_version} deployed successfully.")
@@ -376,14 +378,11 @@ def retrain_models(bootstrap=False):
             new_ver_num = int(current_ver.replace("v", "")) + 1
             new_version = f"v{new_ver_num}"
             
-            filename = f"{key}_{new_version}.pkl"
+            filename = f"{key}.pkl"
             model_path = os.path.join(MODELS_DIR, filename)
             
-            # Save Isolation Forest
+            # Save Isolation Forest directly to canonical name
             joblib.dump(candidate_anom, model_path)
-            # Copy to legacy name
-            legacy_path = os.path.join(MODELS_DIR, f"{key}.pkl")
-            shutil.copy(model_path, legacy_path)
             
             # Update registry history
             if key not in registry:

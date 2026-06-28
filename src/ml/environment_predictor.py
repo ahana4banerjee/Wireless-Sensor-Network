@@ -16,8 +16,8 @@ PLOTS_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", "..", "plots", "environ
 REPORTS_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", "..", "reports"))
 
 # Features defined by user requirements
-TEMP_FEATURES = ["unix_ts", "pressure", "wind_speed", "humidity", "hour", "day", "month"]
-HUMIDITY_FEATURES = ["unix_ts", "pressure", "wind_speed", "temp", "hour", "day", "month"]
+TEMP_FEATURES = ["pressure", "wind_speed", "humidity", "hour", "day", "month"]
+HUMIDITY_FEATURES = ["pressure", "wind_speed", "temp", "hour", "day", "month"]
 
 def load_and_preprocess_data():
     """Loads the processed WSN dataset and derives time features."""
