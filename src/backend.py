@@ -1,8 +1,12 @@
+import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 import paho.mqtt.client as mqtt
 import json
 import pandas as pd
 import time
-import os
+import random
 from collections import deque
 import logging
 from logging.handlers import RotatingFileHandler
@@ -27,6 +31,24 @@ if os.path.exists(CONFIG_PATH):
             BASE_TOPIC = mqtt_config.get("base_topic", BASE_TOPIC)
     except Exception as e:
         print(f"Error reading settings.json: {e}")
+
+_last_settings_load = 0
+_cached_packet_loss_rate = 0.05
+
+def get_packet_loss_rate():
+    global _last_settings_load, _cached_packet_loss_rate
+    now = time.time()
+    if now - _last_settings_load > 5:  # Check settings every 5 seconds max
+        _last_settings_load = now
+        try:
+            if os.path.exists(CONFIG_PATH):
+                with open(CONFIG_PATH, "r") as f:
+                    cfg = json.load(f)
+                    _cached_packet_loss_rate = cfg.get("simulation", {}).get("packet_loss_rate", 0.05)
+        except Exception:
+            pass
+    return _cached_packet_loss_rate
+
 
 TOPIC_FILTER = f"{BASE_TOPIC}/+/+"  # Subscribe to all cities and all message types under the configured base topic
 HEALTH_THRESHOLD = 45     # Seconds before a node is marked OFFLINE
@@ -235,11 +257,37 @@ def on_message(client, userdata, msg):
         node_id = topic_parts[-2]
         msg_type = topic_parts[-1]
         
-        from src.utils.node_registry import resolve_node_id, update_node_last_seen
+        from utils.node_registry import resolve_node_id, update_node_last_seen
         city = resolve_node_id(node_id)
+        
+        # 1. Simulate packet drop backend-side based on settings.json packet_loss_rate
+        drop_rate = get_packet_loss_rate()
+        if random.random() < drop_rate:
+            logger.info(f"[SIMULATED LOSS] Dropped packet from {city} ({node_id}) to simulate network loss.")
+            return # Ignore packet, creating a sequence gap
+
         update_node_last_seen(node_id, time.time())
         
         payload = json.loads(msg.payload.decode())
+
+        # 2. Compute backend-side latency in milliseconds
+        receive_ts = time.time()
+        publish_ts = payload.get("ts", 0)
+        if publish_ts > 1000000000:
+            calculated_latency = max(0.0, (receive_ts - publish_ts) * 1000.0)
+            # Cap at 2000ms to handle minor clock sync variance gracefully
+            calculated_latency = min(calculated_latency, 2000.0)
+        else:
+            # Fallback range to maintain simulation fidelity if NTP is not synchronized yet
+            calculated_latency = round(random.uniform(10.0, 150.0), 2)
+        
+        calculated_latency = round(calculated_latency, 2)
+        
+        # Inject computed latency into payload
+        if "metrics" not in payload:
+            payload["metrics"] = {}
+        payload["metrics"]["latency_ms"] = calculated_latency
+        payload["latency_ms"] = calculated_latency
 
         if msg_type == "status":
             node_health[city] = time.time()

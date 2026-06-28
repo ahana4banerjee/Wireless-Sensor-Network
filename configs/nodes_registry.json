@@ -3,17 +3,23 @@
         "node_id": "node_01",
         "mac_address": "24:0a:c4:08:32:01",
         "location": "Bangalore",
-        "coordinates": {"lat": 12.9716, "lon": 77.5946},
+        "coordinates": {
+            "lat": 12.9716,
+            "lon": 77.5946
+        },
         "sensor_type": "DHT22+BMP180",
         "status": "ONLINE",
         "firmware_version": "2.0.0",
-        "last_seen": null
+        "last_seen": 1782663537.7209191
     },
     "node_02": {
         "node_id": "node_02",
         "mac_address": "24:0a:c4:08:32:02",
         "location": "Delhi",
-        "coordinates": {"lat": 28.7041, "lon": 77.1025},
+        "coordinates": {
+            "lat": 28.7041,
+            "lon": 77.1025
+        },
         "sensor_type": "DHT22+BMP180",
         "status": "ONLINE",
         "firmware_version": "2.0.0",
@@ -23,7 +29,10 @@
         "node_id": "node_03",
         "mac_address": "24:0a:c4:08:32:03",
         "location": "Hyderabad",
-        "coordinates": {"lat": 17.3850, "lon": 78.4867},
+        "coordinates": {
+            "lat": 17.385,
+            "lon": 78.4867
+        },
         "sensor_type": "DHT22+BMP180",
         "status": "ONLINE",
         "firmware_version": "2.0.0",
@@ -33,7 +42,10 @@
         "node_id": "node_04",
         "mac_address": "24:0a:c4:08:32:04",
         "location": "Mumbai",
-        "coordinates": {"lat": 19.0760, "lon": 72.8777},
+        "coordinates": {
+            "lat": 19.076,
+            "lon": 72.8777
+        },
         "sensor_type": "DHT22+BMP180",
         "status": "ONLINE",
         "firmware_version": "2.0.0",
@@ -43,7 +55,10 @@
         "node_id": "node_05",
         "mac_address": "24:0a:c4:08:32:05",
         "location": "Secunderabad",
-        "coordinates": {"lat": 17.4399, "lon": 78.4983},
+        "coordinates": {
+            "lat": 17.4399,
+            "lon": 78.4983
+        },
         "sensor_type": "DHT22+BMP180",
         "status": "ONLINE",
         "firmware_version": "2.0.0",
