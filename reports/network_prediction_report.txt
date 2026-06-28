@@ -4,29 +4,29 @@
 
 1. DATASET PROFILE
 ------------------
-Total Observations Loaded: 2405
-Training Set Size (80%): 1924
-Test Set Size (20%):     481
+Total Observations Loaded: 2437
+Training Set Size (80%): 1949
+Test Set Size (20%):     488
 
 2. MODEL METRICS SUMMARY
 ------------------------
 Model A: Battery Level Prediction
-  * Features Used: unix_ts, signal_strength, latency_ms, packet_loss_rate, anomaly_flag
-  * Mean Absolute Error (MAE)   : 25.0532 %
-  * Root Mean Squared Error (RMSE): 28.6434 %
-  * R² Score (Variance Explained) : 0.0031
+  * Features Used: signal_strength, latency_ms, packet_loss_rate, anomaly_flag
+  * Mean Absolute Error (MAE)   : 25.1790 %
+  * Root Mean Squared Error (RMSE): 28.7654 %
+  * R² Score (Variance Explained) : -0.0045
 
 Model B: Network Latency Prediction
-  * Features Used: unix_ts, signal_strength, packet_loss_rate, battery_level
-  * Mean Absolute Error (MAE)   : 226.7246 ms
-  * Root Mean Squared Error (RMSE): 287.3062 ms
-  * R² Score (Variance Explained) : -0.0102
+  * Features Used: signal_strength, packet_loss_rate, battery_level
+  * Mean Absolute Error (MAE)   : 225.0566 ms
+  * Root Mean Squared Error (RMSE): 282.3283 ms
+  * R² Score (Variance Explained) : 0.0005
 
 Model C: Packet Loss Rate Prediction
-  * Features Used: unix_ts, signal_strength, battery_level, latency_ms
-  * Mean Absolute Error (MAE)   : 0.8660 %
-  * Root Mean Squared Error (RMSE): 1.0961 %
-  * R² Score (Variance Explained) : 0.0867
+  * Features Used: signal_strength, battery_level, latency_ms
+  * Mean Absolute Error (MAE)   : 0.9845 %
+  * Root Mean Squared Error (RMSE): 2.5310 %
+  * R² Score (Variance Explained) : 0.0062
 
 3. HEALTH SCORE EXPLANATION
 ---------------------------
@@ -41,33 +41,30 @@ Formula:
   network_health_score = 0.35*battery_norm + 0.25*signal_norm + 0.20*latency_norm + 0.20*loss_norm
 
 Health Score Prediction Performance:
-  * MAE  : 8.7866
-  * RMSE : 10.4050
-  * R²   : 0.1016
+  * MAE  : 9.2960
+  * RMSE : 10.9785
+  * R²   : 0.0359
 
 4. KEY OBSERVATIONS & FINDINGS
 ------------------------------
 Model A Coefficients (Battery Level):
-  * unix_ts           : 0.000004
-  * signal_strength   : -0.046486
-  * latency_ms        : -0.001700
-  * packet_loss_rate  : -0.177083
-  * anomaly_flag      : 0.005598
-  * Intercept         : -7135.643901
+  * signal_strength   : 0.034856
+  * latency_ms        : 0.002925
+  * packet_loss_rate  : -0.264898
+  * anomaly_flag      : -1.412418
+  * Intercept         : 60.584147
 
 Model B Coefficients (Latency):
-  * unix_ts           : 0.000029
-  * signal_strength   : -0.278013
-  * packet_loss_rate  : -6.779505
-  * battery_level     : -0.159853
-  * Intercept         : -50797.128652
+  * signal_strength   : 0.489778
+  * packet_loss_rate  : -2.931052
+  * battery_level     : 0.266092
+  * Intercept         : 492.591212
 
 Model C Coefficients (Packet Loss):
-  * unix_ts           : -0.000000
-  * signal_strength   : -0.030691
-  * battery_level     : -0.000292
-  * latency_ms        : -0.000119
-  * Intercept         : 785.142349
+  * signal_strength   : -0.028848
+  * battery_level     : -0.001780
+  * latency_ms        : -0.000210
+  * Intercept         : 2.728446
 
 Key Interpretations:
   * Battery Level prediction relies on elapsed time (unix_ts) as a major indicator of continuous power discharge.

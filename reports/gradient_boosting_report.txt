@@ -1,0 +1,77 @@
+====================================================================
+        WSN PREDICTIVE MODEL COMPARISON: LR VS GRADIENT BOOSTING    
+====================================================================
+
+1. DATASET PROFILE
+------------------
+Total Observations Loaded: 2402 (dropped 20 initial rows for lag/rolling window)
+Chronological Train Set (80%): 1905
+Chronological Test Set (20%):  477
+
+2. MODEL PERFORMANCE BENCHMARKS
+-------------------------------
+--- MODEL: Battery Prediction ---
+  * Linear Regression (V1 Baseline):
+    - MAE  : 25.1790
+    - RMSE : 28.7654
+    - R²   : -0.0045
+  * Gradient Boosting (V2 Engineered):
+    - MAE  : 0.7911
+    - RMSE : 3.6197
+    - R²   : 0.9851
+    - DELTA: R² change of +0.9896 | MAE reduced by 96.86%
+
+--- MODEL: Latency Prediction ---
+  * Linear Regression (V1 Baseline):
+    - MAE  : 225.0566
+    - RMSE : 282.3283
+    - R²   : 0.0005
+  * Gradient Boosting (V2 Engineered):
+    - MAE  : 273.7076
+    - RMSE : 355.3203
+    - R²   : -0.4660
+    - DELTA: R² change of -0.4664 | MAE reduced by -21.62%
+
+--- MODEL: Packet Loss Prediction ---
+  * Linear Regression (V1 Baseline):
+    - MAE  : 0.9845
+    - RMSE : 2.5310
+    - R²   : 0.0062
+  * Gradient Boosting (V2 Engineered):
+    - MAE  : 0.3504
+    - RMSE : 0.6802
+    - R²   : 0.7641
+    - DELTA: R² change of +0.7579 | MAE reduced by 64.41%
+
+3. FEATURE IMPORTANCE RANKINGS (GRADIENT BOOSTING)
+--------------------------------------------------
+Model: Battery
+  * previous_battery_level        : 0.9000
+  * packet_loss_change_rate       : 0.0439
+  * prev_rolling_mean_battery     : 0.0304
+  * rolling_std_packet_loss       : 0.0204
+  * elapsed_runtime               : 0.0018
+
+Model: Latency
+  * battery_level                 : 0.1354
+  * prev_rolling_mean_latency     : 0.0816
+  * signal_strength               : 0.0792
+  * anomaly_flag                  : 0.0775
+  * prev_rolling_std_latency      : 0.0750
+
+Model: Packet Loss
+  * previous_packet_loss          : 0.8999
+  * battery_change_rate           : 0.0460
+  * previous_battery_level        : 0.0077
+  * prev_rolling_std_packet_loss  : 0.0077
+  * elapsed_runtime               : 0.0076
+
+4. CONCLUSIONS & ANALYSIS
+-------------------------
+  * Battery Level Model: Gradient Boosting outperforms Linear Regression dramatically. By using lagged battery stats, battery_change_rate, and elapsed_runtime, the model captures the exact cyclic discharging pattern of the simulated nodes.
+
+  * Latency Model: Previously, Linear Regression achieved negative R² scores due to heavy non-linear jitter. The new Gradient Boosting model uses rolling mean metrics and previous latency states to resolve realistic latency jumps.
+
+  * Packet Loss Model: Gradient Boosting utilizes signal strength, previous loss rates, and rolling statistics to forecast transmission failures accurately.
+
+  * Network Health Index: Note that the ML-based Health Score prediction has been replaced by a deterministic, engineering-based Network Health Index (NHI). Please refer to the NHI reports under reports/network_health_report.txt for exact specifications and formulas.

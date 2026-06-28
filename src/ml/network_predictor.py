@@ -16,9 +16,9 @@ PLOTS_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", "..", "plots", "network
 REPORTS_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", "..", "reports"))
 
 # Feature and target columns based on requirements
-BATTERY_FEATURES = ["unix_ts", "signal_strength", "latency_ms", "packet_loss_rate", "anomaly_flag"]
-LATENCY_FEATURES = ["unix_ts", "signal_strength", "packet_loss_rate", "battery_level"]
-PACKET_LOSS_FEATURES = ["unix_ts", "signal_strength", "battery_level", "latency_ms"]
+BATTERY_FEATURES = ["signal_strength", "latency_ms", "packet_loss_rate", "anomaly_flag"]
+LATENCY_FEATURES = ["signal_strength", "packet_loss_rate", "battery_level"]
+PACKET_LOSS_FEATURES = ["signal_strength", "battery_level", "latency_ms"]
 
 def load_and_preprocess_data():
     """Loads the processed WSN dataset and cleans missing telemetry entries."""

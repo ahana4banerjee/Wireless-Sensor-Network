@@ -1,0 +1,52 @@
+====================================================
+      WSN ENVIRONMENTAL PREDICTION REPORT           
+====================================================
+
+1. DATASET PROFILE
+------------------
+Total Observations Loaded: 2437
+Training Set Size (80%): 1949
+Test Set Size (20%):     488
+
+2. MODEL A PERFORMANCE SUMMARY (Target: Temperature)
+----------------------------------------------------
+Features Used: pressure, wind_speed, humidity, hour, day, month
+Mean Absolute Error (MAE)   : 1.0988 °C
+Root Mean Squared Error (RMSE): 1.4849 °C
+R² Score (Variance Explained) : 0.7728
+
+Model Coefficients:
+  * pressure       : -0.080891
+  * wind_speed     : -0.252230
+  * humidity       : -0.090303
+  * hour           : -0.503889
+  * day            : 0.117549
+  * month          : 0.519755
+  * Intercept      : 122.032253
+
+3. MODEL B PERFORMANCE SUMMARY (Target: Humidity)
+-------------------------------------------------
+Features Used: pressure, wind_speed, temp, hour, day, month
+Mean Absolute Error (MAE)   : 8.2861 %
+Root Mean Squared Error (RMSE): 10.5593 %
+R² Score (Variance Explained) : 0.4684
+
+Model Coefficients:
+  * pressure       : 0.575589
+  * wind_speed     : -0.645078
+  * temp           : -3.863081
+  * hour           : -0.857221
+  * day            : 0.825056
+  * month          : 2.062726
+  * Intercept      : -410.321709
+
+4. KEY OBSERVATIONS & ANALYSIS
+------------------------------
+- Strongest Predictors:
+  * For Temperature: Humidity exhibits a weight of -0.0903. As humidity rises, temperature decreases.
+  * For Humidity: Temperature has a weight of -3.8631. Warm air has a higher capacity for moisture, showing a strong negative linear correlation in observations.
+  * Time Features: The derived time metrics (hour, day, month) allow the models to adapt to diurnal and seasonal variations within the historical logs.
+
+5. CONCLUSION
+-------------
+Both Linear Regression models achieve stable, low-error performance. The saved pickle models are ready to be integrated into the server API layer to serve live forecasts to the React Dashboard.
