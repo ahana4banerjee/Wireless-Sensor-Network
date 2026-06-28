@@ -4,7 +4,7 @@
         "history": [
             {
                 "version": "v1",
-                "filename": "temp_model_v1.pkl",
+                "filename": "temp_model.pkl",
                 "created_time": "2026-06-27T18:45:58Z",
                 "dataset_size": 2433,
                 "metrics": {
@@ -22,7 +22,7 @@
         "history": [
             {
                 "version": "v1",
-                "filename": "humidity_model_v1.pkl",
+                "filename": "humidity_model.pkl",
                 "created_time": "2026-06-27T18:45:58Z",
                 "dataset_size": 2433,
                 "metrics": {
@@ -40,7 +40,7 @@
         "history": [
             {
                 "version": "v1",
-                "filename": "battery_model_v1.pkl",
+                "filename": "battery_model.pkl",
                 "created_time": "2026-06-27T18:45:58Z",
                 "dataset_size": 2433,
                 "metrics": {
@@ -58,7 +58,7 @@
         "history": [
             {
                 "version": "v1",
-                "filename": "latency_model_v1.pkl",
+                "filename": "latency_model.pkl",
                 "created_time": "2026-06-27T18:45:58Z",
                 "dataset_size": 2433,
                 "metrics": {
@@ -76,7 +76,7 @@
         "history": [
             {
                 "version": "v1",
-                "filename": "packet_loss_model_v1.pkl",
+                "filename": "packet_loss_model.pkl",
                 "created_time": "2026-06-27T18:45:58Z",
                 "dataset_size": 2433,
                 "metrics": {
@@ -94,7 +94,7 @@
         "history": [
             {
                 "version": "v1",
-                "filename": "gb_battery_model_v1.pkl",
+                "filename": "gb_battery_model.pkl",
                 "created_time": "2026-06-27T18:46:00Z",
                 "dataset_size": 2433,
                 "metrics": {
@@ -112,7 +112,7 @@
         "history": [
             {
                 "version": "v1",
-                "filename": "gb_latency_model_v1.pkl",
+                "filename": "gb_latency_model.pkl",
                 "created_time": "2026-06-27T18:46:01Z",
                 "dataset_size": 2433,
                 "metrics": {
@@ -130,7 +130,7 @@
         "history": [
             {
                 "version": "v1",
-                "filename": "gb_packet_loss_model_v1.pkl",
+                "filename": "gb_packet_loss_model.pkl",
                 "created_time": "2026-06-27T18:46:02Z",
                 "dataset_size": 2433,
                 "metrics": {
@@ -148,7 +148,7 @@
         "history": [
             {
                 "version": "v1",
-                "filename": "anomaly_model_v1.pkl",
+                "filename": "anomaly_model.pkl",
                 "created_time": "2026-06-27T18:46:02Z",
                 "dataset_size": 2433,
                 "metrics": {

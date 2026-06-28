@@ -10,7 +10,7 @@
         "sensor_type": "DHT22+BMP180",
         "status": "ONLINE",
         "firmware_version": "2.0.0",
-        "last_seen": 1782663537.7209191
+        "last_seen": 1782665741.2433522
     },
     "node_02": {
         "node_id": "node_02",
