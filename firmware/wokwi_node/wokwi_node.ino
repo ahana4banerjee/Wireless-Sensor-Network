@@ -4,6 +4,7 @@
 #include <DHT.h>
 #include <Wire.h>
 #include <Adafruit_BMP085.h>
+#include <sys/time.h>
 
 // --- Configuration Parameters ---
 String node_id = "mac";  // Set to "mac" to use hardware MAC address dynamically, or use custom hardcoded string
@@ -35,6 +36,11 @@ float rssi_noise    = 3.00;
 float packet_loss_rate = 0.05; // 5% packet loss
 float max_delay_ms  = 1500.00;
 
+// Wind speed simulation parameters
+float wind_speed_min = 0.50;
+float wind_speed_max = 15.00;
+float wind_speed_current = 3.20;
+
 // Global clients
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -49,14 +55,54 @@ unsigned int seqNum = 0;
 String status_topic;
 String data_topic;
 
-// Helper to simulate normal distribution/noise
+// Helper to query actual WiFi RSSI with fallback to simulated RSSI
 float get_signal_strength() {
-    float noise = random(-300, 300) / 100.0; // Random noise -3.0 to +3.0
+    if (WiFi.status() == WL_CONNECTED) {
+        long rssi = WiFi.RSSI();
+        // Check if we get a valid negative reading (typical range is -100 to -30 dBm)
+        if (rssi < 0 && rssi > -120) {
+            return (float)rssi;
+        }
+    }
+    // Fallback to simulated RSSI
+    float noise = random(-300, 300) / 100.0;
     float rssi = rssi_baseline + noise;
     if (rssi > -30.0) rssi = -30.0;
     if (rssi < -100.0) rssi = -100.0;
     return rssi;
 }
+
+// Helper to calculate smooth visibility
+float calculate_visibility(float humidity, const char* condition) {
+    float base_vis = 10000.0;
+    if (strcmp(condition, "Rain") == 0) {
+        base_vis = random(1500, 4000);
+    } else if (strcmp(condition, "Clouds") == 0) {
+        base_vis = random(5000, 8500);
+    } else { // Clear
+        base_vis = random(9000, 10000);
+    }
+    
+    // High humidity reduces visibility further
+    if (humidity > 80.0) {
+        float factor = 1.0 - ((humidity - 80.0) / 20.0) * 0.5; // up to 50% reduction
+        base_vis *= factor;
+    }
+    
+    // Add small random fluctuation (+/- 200m)
+    base_vis += random(-200, 200);
+    return constrain(base_vis, 500.0, 10000.0);
+}
+
+// Helper to fetch accurate decimal timestamp
+double get_precise_timestamp() {
+    struct timeval tv;
+    if (gettimeofday(&tv, NULL) == 0 && tv.tv_sec > 100000) {
+        return (double)tv.tv_sec + (double)tv.tv_usec / 1000000.0;
+    }
+    return millis() / 1000.0;
+}
+
 
 // Update battery level based on event cost
 void update_battery(const char* eventType) {
@@ -77,16 +123,9 @@ void update_battery(const char* eventType) {
 
 // Simulate latency and network check
 bool simulate_network_behavior(float* latency) {
-    // 1. Packet Loss Check
-    float randCheck = random(0, 100) / 100.0;
-    if (randCheck < packet_loss_rate) {
-        return false; // Packet dropped
-    }
-
-    // 2. Latency delay
-    *latency = random(10, max_delay_ms);
-    delay(*latency);
-    return true;
+    // Latency is calculated by backend now; firmware publishes immediately
+    *latency = 0.0;
+    return true; // Never intentionally drop packets
 }
 
 void setup_wifi() {
@@ -226,7 +265,7 @@ void loop() {
             doc["node_id"] = node_id;
             doc["city"] = node_id;
             doc["status"] = "ONLINE";
-            doc["timestamp"] = time(NULL) > 100000 ? time(NULL) : (millis() / 1000.0);
+            doc["timestamp"] = get_precise_timestamp();
             doc["ts"] = doc["timestamp"];
             doc["seq_num"] = seqNum;
 
@@ -278,13 +317,29 @@ void loop() {
                 pressVal = 1012.0 + random(-2, 2);
             }
 
+            // Derive atmospheric condition based on pressure and humidity
+            const char* condition = "Clear";
+            if (pressVal < 1008.0) {
+                condition = "Rain";
+            } else if (humVal > 75.0) {
+                condition = "Clouds";
+            }
+
+            // Evolve wind speed smoothly
+            float wind_change = (random(-100, 100) / 100.0) * 0.4;
+            wind_speed_current = constrain(wind_speed_current + wind_change, wind_speed_min, wind_speed_max);
+
+            // Calculate dynamic visibility
+            float visibility_current = calculate_visibility(humVal, condition);
+
             // Create JSON data Document
             StaticJsonDocument<512> doc;
             doc["node_id"] = node_id;
             doc["city"] = node_id;
-            doc["timestamp"] = time(NULL) > 100000 ? time(NULL) : (millis() / 1000.0);
+            doc["timestamp"] = get_precise_timestamp();
             doc["ts"] = doc["timestamp"];
             doc["seq_num"] = seqNum;
+            doc["condition"] = condition;
 
             // Direct properties requested by the user
             doc["temperature"] = round(tempVal * 100.0) / 100.0;
@@ -300,21 +355,12 @@ void loop() {
             metrics["feels_like"] = round((tempVal + 1.0) * 100.0) / 100.0;
             metrics["humidity"] = doc["humidity"];
             metrics["pressure"] = doc["pressure"];
-            metrics["wind_speed"] = 3.20;
-            metrics["visibility"] = 10000;
+            metrics["wind_speed"] = round(wind_speed_current * 100.0) / 100.0;
+            metrics["visibility"] = round(visibility_current * 100.0) / 100.0;
             metrics["battery_level"] = doc["battery_level"];
             metrics["signal_strength"] = doc["signal_strength"];
             metrics["latency_ms"] = doc["latency_ms"];
             metrics["seq_num"] = seqNum;
-            
-            // Derive atmospheric condition based on pressure and humidity
-            if (pressVal < 1008.0) {
-                doc["condition"] = "Rain";
-            } else if (humVal > 75.0) {
-                doc["condition"] = "Clouds";
-            } else {
-                doc["condition"] = "Clear";
-            }
 
             // Serialize payload to buffer
             char buffer[512];
