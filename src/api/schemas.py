@@ -127,3 +127,42 @@ class SettingsResponse(BaseModel):
     mqtt: dict
     simulation: SimulationSettings
     cities: List[str]
+
+class ForecastTimelineRecord(BaseModel):
+    time_offset_h: int
+    timestamp: str
+    time_label: str
+    temperature: float
+    humidity: float
+    pressure: float
+    condition: str
+    battery_level: float
+    signal_strength: float
+    latency_ms: float
+    packet_loss_rate: float
+    health_score: float
+    health_status: str
+    risk_level: str
+
+class OperationalInsight(BaseModel):
+    type: str
+    severity: str
+    message: str
+    recommendation: str
+
+class NodeForecastDetail(BaseModel):
+    city: str
+    forecast_horizon_h: int
+    step_hours: int
+    overall_risk_level: str
+    confidence_prediction_intervals: Dict[str, str]
+    timeline: List[ForecastTimelineRecord]
+    operational_insights: List[OperationalInsight]
+
+class AllNodesForecastSummary(BaseModel):
+    total_nodes: int
+    critical_risks: int
+    high_risks: int
+    medium_risks: int
+    normal_nodes: int
+    nodes: Dict[str, NodeForecastDetail]

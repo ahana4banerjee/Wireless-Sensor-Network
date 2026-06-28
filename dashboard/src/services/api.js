@@ -54,6 +54,9 @@ export const wsnApi = {
   getTwins: () => fetchFromApi("/api/twins"),
   getTwinsSummary: () => fetchFromApi("/api/twins/summary"),
   getTwin: (nodeId) => fetchFromApi(`/api/twins/${encodeURIComponent(nodeId)}`),
+  // Operational Decision Support (ODSS) Forecasts
+  getAllForecasts: (horizon = 72, step = 3) => fetchFromApi(`/api/predictions/forecast?horizon=${horizon}&step=${step}`),
+  getNodeForecast: (nodeId, horizon = 72, step = 3) => fetchFromApi(`/api/predictions/forecast/${encodeURIComponent(nodeId)}?horizon=${horizon}&step=${step}`),
 };
 
 export const EXPORT_URLS = {
