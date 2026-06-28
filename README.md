@@ -1,5 +1,15 @@
 # Intelligent Wireless Sensor Network (WSN) Platform & Simulation
 
+[![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=flat-square&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![React](https://img.shields.io/badge/React-18-20232A?style=flat-square&logo=react&logoColor=61DAFB)](https://react.dev/)
+[![MQTT](https://img.shields.io/badge/MQTT-3.1.1-3C3F41?style=flat-square&logo=mqtt&logoColor=white)](https://mqtt.org/)
+[![ESP32](https://img.shields.io/badge/ESP32-Hardware%20Sim-E7352C?style=flat-square&logo=espressif&logoColor=white)](https://wokwi.com/)
+[![Wokwi Sim](https://img.shields.io/badge/Wokwi-ESP32%20Sim-00979D?style=flat-square&logo=arduino&logoColor=white)](https://wokwi.com/)
+[![Digital Twin](https://img.shields.io/badge/Digital%20Twin-Sync-blueviolet?style=flat-square&logo=hcl&logoColor=white)](docs/CONTEXT.md)
+[![PlatformIO](https://img.shields.io/badge/PlatformIO-Target-F58220?style=flat-square&logo=platformio&logoColor=white)](firmware/esp32_wsn_node/platformio.ini)
+[![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
+
 An enterprise-grade, simulation-first IoT platform for distributed Wireless Sensor Networks (WSNs). The system is built around a decoupled architecture where the network protocols, API gateways, and dashboards remain identical, while the telemetry generation source evolves across three distinct implementation phases.
 
 ---
@@ -137,13 +147,14 @@ Wireless-Sensor-Network/
 
 ## 💻 Installation
 
-Detailed installation instructions are available in [docs/DEPLOYMENT.md](file:///d:/Projects/College/Wireless-Sensor-Network/docs/DEPLOYMENT.md).
+Detailed installation instructions are available in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
 ### Quick Start:
 
-1.  **Clone & Configure virtual environment**:
+1.  **Fork & Clone**:
+    First, **fork** this repository to your own account, then clone your fork:
     ```bash
-    git clone https://github.com/your-username/Wireless-Sensor-Network.git
+    git clone https://github.com/YOUR_USERNAME/Wireless-Sensor-Network.git
     cd Wireless-Sensor-Network
     python -m venv .venv
     # Windows:
@@ -181,6 +192,19 @@ Detailed installation instructions are available in [docs/DEPLOYMENT.md](file://
 
 ---
 
+## 📚 Technical Documentation Reference
+
+To understand the core design choices, REST endpoints, and ML methodologies in detail, explore the technical documents:
+
+*   **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**: System layers blueprint, communication schemas, sequence flows, and lifecycles.
+*   **[docs/CONTEXT.md](docs/CONTEXT.md)**: Developer reference, MAC identity resolution, digital twin swaps, and replay logic.
+*   **[docs/API.md](docs/API.md)**: Complete REST API specification including forecast payloads and Pydantic schemas.
+*   **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)**: Step-by-step local installation, virtual environment setup, and cloud configurations.
+*   **[docs/HARDWARE.md](docs/HARDWARE.md)**: Pin connections mapping, physical circuit assemblies, and PlatformIO flashing configurations.
+*   **[docs/ML_PIPELINE.md](docs/ML_PIPELINE.md)**: Regression models feature sets, MLOps retraining gates, and health scoring formulas.
+
+---
+
 ## 🔮 Future Roadmap
 
 *   Deploy C++ firmware to physical ESP32 boards.
@@ -191,8 +215,8 @@ Detailed installation instructions are available in [docs/DEPLOYMENT.md](file://
 ---
 
 ## 👤 Author
-**Ahana Banerjee**
-*   College Project Portfolio - Wireless Sensor Network Platform.
+**Ahana Banerjee**  
+*JNTUH, ECE, 4th Year*
 
 ---
 
@@ -200,3 +224,7 @@ Detailed installation instructions are available in [docs/DEPLOYMENT.md](file://
 *   [Wokwi Web Simulator](https://wokwi.com/) for simulated hardware interfaces.
 *   [HiveMQ](https://www.hivemq.com/) for public MQTT broker capabilities.
 *   [OpenWeatherMap](https://openweathermap.org/) for initial atmospheric readings seed data.
+
+---
+
+⭐ *Please star and fork the repository if you like it!*
